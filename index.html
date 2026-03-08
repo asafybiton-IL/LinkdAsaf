@@ -1191,7 +1191,7 @@ function checkLogin() {
     document.getElementById('login-overlay').style.display = 'none';
     err.textContent = '';
     logDeviceLogin();
-    init();
+    init().then(checkImport);
   } else {
     input.classList.add('error');
     err.textContent = 'סיסמה שגויה, נסה שוב';
@@ -1342,6 +1342,47 @@ function setAutosaveStatus(status) {
   if (status === 'saving') { el.textContent = '💾 שומר...'; el.className = 'autosave-indicator saving'; }
   else if (status === 'saved') { el.textContent = '✓ נשמר אוטומטית'; el.className = 'autosave-indicator saved'; setTimeout(() => { el.textContent = ''; el.className = 'autosave-indicator'; }, 3000); }
   else { el.textContent = ''; el.className = 'autosave-indicator'; }
+}
+
+
+// ========== IMPORT FROM URL ==========
+async function checkImport() {
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get('import');
+  if (!raw) return;
+
+  try {
+    const items = JSON.parse(decodeURIComponent(raw));
+    if (!items || !items.length) return;
+
+    setSyncing(true);
+    let count = 0;
+    for (const item of items) {
+      const post = {
+        id: Date.now() + count,
+        created: Date.now() + count,
+        title: item.title || '',
+        body: item.body || '',
+        visual: '',
+        status: 'idea',
+        tags: [],
+        date: ''
+      };
+      posts.unshift(post);
+      await savePosts(post, 'savePost');
+      count++;
+      await new Promise(r => setTimeout(r, 300));
+    }
+    setSyncing(false);
+    render();
+    showToast('🎉 ' + count + ' פוסטים נוספו מקלוד!');
+
+    // Clean URL
+    window.history.replaceState({}, '', window.location.pathname);
+  } catch(e) {
+    setSyncing(false);
+    showToast('⚠️ שגיאה בייבוא');
+  }
 }
 
 // ========== MOBILE STEPS ==========
@@ -1719,7 +1760,7 @@ function showToast(msg) {
 if (!checkAuth()) {
   // Show login, init() called after successful login
 } else {
-  init();
+  init().then(checkImport);
 }
 </script>
 
