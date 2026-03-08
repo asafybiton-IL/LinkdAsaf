@@ -966,6 +966,17 @@
   .device-row .device-info { flex: 1; }
   .device-row .device-time { color: var(--text3); font-size: 11px; }
 
+
+  /* ========== AUTOSAVE ========== */
+  .autosave-indicator {
+    font-size: 11px;
+    color: var(--text3);
+    margin-right: auto;
+    transition: color 0.3s;
+  }
+  .autosave-indicator.saving { color: var(--draft); }
+  .autosave-indicator.saved { color: var(--ready); }
+
 </style>
 </head>
 <body>
@@ -1120,6 +1131,7 @@
 
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal()">ביטול</button>
+      <span class="autosave-indicator" id="autosave-indicator"></span>
       <button class="btn-copy" id="copy-btn" onclick="copyPostText()" style="display:none">📋 העתק</button>
       <button class="btn-primary" onclick="savePost()">שמור</button>
     </div>
@@ -1263,6 +1275,74 @@ document.addEventListener('click', (e) => {
     modal.classList.remove('open');
   }
 });
+
+
+// ========== AUTOSAVE ==========
+let autosaveTimer = null;
+let autosaveChanged = false;
+
+function startAutosave() {
+  // Clear existing timer
+  if (autosaveTimer) clearInterval(autosaveTimer);
+  autosaveChanged = false;
+
+  // Watch for changes
+  ['field-title', 'field-body', 'field-visual'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { autosaveChanged = true; });
+  });
+  ['field-status', 'field-date'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => { autosaveChanged = true; });
+  });
+
+  // Autosave every 30 seconds if changed
+  autosaveTimer = setInterval(async () => {
+    if (!autosaveChanged) return;
+    const title = document.getElementById('field-title').value.trim();
+    const body = document.getElementById('field-body').value.trim();
+    if (!title && !body) return;
+
+    setAutosaveStatus('saving');
+    autosaveChanged = false;
+
+    const postData = {
+      id: editingId || Date.now(),
+      title,
+      body,
+      visual: document.getElementById('field-visual').value.trim(),
+      status: document.getElementById('field-status').value,
+      date: document.getElementById('field-date').value,
+      tags: currentTags,
+      created: editingId ? (posts.find(p => p.id === editingId)?.created || Date.now()) : Date.now()
+    };
+
+    if (!editingId) {
+      editingId = postData.id;
+      posts.unshift(postData);
+    } else {
+      const idx = posts.findIndex(p => p.id === editingId);
+      if (idx !== -1) posts[idx] = postData;
+    }
+
+    await savePosts(postData, 'savePost');
+    setAutosaveStatus('saved');
+    render();
+  }, 30000);
+}
+
+function stopAutosave() {
+  if (autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; }
+  setAutosaveStatus('');
+}
+
+function setAutosaveStatus(status) {
+  const el = document.getElementById('autosave-indicator');
+  if (!el) return;
+  if (status === 'saving') { el.textContent = '💾 שומר...'; el.className = 'autosave-indicator saving'; }
+  else if (status === 'saved') { el.textContent = '✓ נשמר אוטומטית'; el.className = 'autosave-indicator saved'; setTimeout(() => { el.textContent = ''; el.className = 'autosave-indicator'; }, 3000); }
+  else { el.textContent = ''; el.className = 'autosave-indicator'; }
+}
 
 // ========== MOBILE STEPS ==========
 function setStep(n) {
@@ -1451,9 +1531,11 @@ function openModal(post = null) {
   renderTagChips();
   updateCharCount(document.getElementById('field-body'));
   document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(startAutosave, 100);
 }
 
 function closeModal() {
+  stopAutosave();
   document.getElementById('modal-overlay').classList.remove('open');
   editingId = null;
   currentTags = [];
