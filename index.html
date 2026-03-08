@@ -739,6 +739,31 @@
     .modal-footer button { flex: 1; min-width: 120px; }
   }
 
+
+  /* Trash */
+  .badge-deleted { background: rgba(255,101,132,0.12); color: var(--accent2); }
+  .trash-timer {
+    font-size: 11px;
+    color: var(--accent2);
+    background: rgba(255,101,132,0.08);
+    padding: 4px 8px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    display: inline-block;
+  }
+  .restore-btn {
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: rgba(108,99,255,0.1);
+    color: var(--accent);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Heebo', sans-serif;
+    transition: all 0.15s;
+  }
+  .restore-btn:hover { background: var(--accent); color: #fff; }
+
 </style>
 </head>
 <body>
@@ -776,6 +801,10 @@
     <button class="sidebar-btn" onclick="filterStatus('published', this)">
       <span class="dot" style="background:var(--published)"></span> פורסם
       <span class="count-badge" id="count-published">0</span>
+    </button>
+    <button class="sidebar-btn" onclick="filterStatus('deleted', this)">
+      <span>🗑</span> נמחקו לאחרונה
+      <span class="count-badge" id="count-deleted">0</span>
     </button>
     </div>
 
@@ -901,14 +930,16 @@ const statusLabels = {
   idea: 'רעיון',
   draft: 'דראפט',
   ready: 'מוכן לפרסום',
-  published: 'פורסם'
+  published: 'פורסם',
+  deleted: 'נמחק'
 };
 
 const statusEmoji = {
   idea: '💡',
   draft: '✏️',
   ready: '✅',
-  published: '🚀'
+  published: '🚀',
+  deleted: '🗑'
 };
 
 // ========== SYNC ==========
@@ -946,20 +977,25 @@ function render() {
 }
 
 function updateStats() {
-  const counts = { idea: 0, draft: 0, ready: 0, published: 0 };
-  posts.forEach(p => counts[p.status]++);
+  const counts = { idea: 0, draft: 0, ready: 0, published: 0, deleted: 0 };
+  posts.forEach(p => { if (counts[p.status] !== undefined) counts[p.status]++; });
 
-  document.getElementById('stat-total').textContent = posts.length;
+  document.getElementById('stat-total').textContent = posts.filter(p => p.status !== 'deleted').length;
   document.getElementById('stat-ready').textContent = counts.ready;
   document.getElementById('stat-draft').textContent = counts.draft;
   document.getElementById('stat-idea').textContent = counts.idea;
   document.getElementById('stat-published').textContent = counts.published;
 
-  document.getElementById('count-all').textContent = posts.length;
+  // Auto-purge deleted posts older than 48h
+  const now = Date.now();
+  posts = posts.filter(p => !(p.status === 'deleted' && p.deletedAt && (now - Number(p.deletedAt)) > 172800000));
+
+  document.getElementById('count-all').textContent = posts.filter(p => p.status !== 'deleted').length;
   document.getElementById('count-idea').textContent = counts.idea;
   document.getElementById('count-draft').textContent = counts.draft;
   document.getElementById('count-ready').textContent = counts.ready;
   document.getElementById('count-published').textContent = counts.published;
+  document.getElementById('count-deleted').textContent = counts.deleted || 0;
 }
 
 function updateSidebarTags() {
@@ -978,7 +1014,7 @@ function updateSidebarTags() {
 
 function renderPosts() {
   let filtered = posts.filter(p => {
-    const matchStatus = currentFilter === 'all' || p.status === currentFilter;
+    const matchStatus = currentFilter === 'all' ? p.status !== 'deleted' : p.status === currentFilter;
     const matchTag = !filterTag || p.tags.includes(filterTag);
     const matchSearch = !currentSearch ||
       p.title.includes(currentSearch) ||
@@ -1023,6 +1059,27 @@ function renderCard(post) {
       <div class="post-actions">
         <button class="action-btn" onclick="event.stopPropagation();copyText(${post.id})">העתק</button>
         <button class="action-btn danger" onclick="event.stopPropagation();deletePost(${post.id})">🗑</button>
+      </div>
+    </div>`;
+  }
+
+  if (post.status === 'deleted') {
+    const deletedAt = Number(post.deletedAt) || Date.now();
+    const hoursLeft = Math.max(0, Math.ceil((deletedAt + 172800000 - Date.now()) / 3600000));
+    return `
+    <div class="post-card status-deleted">
+      <div class="post-card-header">
+        <div class="post-title">${post.title || 'ללא כותרת'}</div>
+        ${badge}
+      </div>
+      <div class="trash-timer">⏱ יימחק סופית בעוד ${hoursLeft} שעות</div>
+      <div class="post-body">${post.body || ''}</div>
+      <div class="post-footer">
+        <div class="post-tags">${tags}</div>
+        <div class="post-actions" style="opacity:1">
+          <button class="restore-btn" onclick="event.stopPropagation();restorePost(${post.id})">♻️ שחזר</button>
+          <button class="action-btn danger" onclick="event.stopPropagation();hardDeletePost(${post.id})">🗑 מחק סופית</button>
+        </div>
       </div>
     </div>`;
   }
@@ -1109,13 +1166,40 @@ async function savePost() {
 }
 
 async function deletePost(id) {
-  if (!confirm('למחוק את הפוסט?')) return;
+  if (!confirm('להעביר לסל המחזור? יימחק סופית תוך 48 שעות.')) return;
+  const idx = posts.findIndex(p => p.id === id);
+  if (idx !== -1) {
+    posts[idx].status = 'deleted';
+    posts[idx].deletedAt = Date.now();
+    setSyncing(true);
+    await savePosts(posts[idx], 'savePost');
+    setSyncing(false);
+  }
+  render();
+  showToast('🗑 הועבר לנמחקו לאחרונה');
+}
+
+async function restorePost(id) {
+  const idx = posts.findIndex(p => p.id === id);
+  if (idx !== -1) {
+    posts[idx].status = 'idea';
+    delete posts[idx].deletedAt;
+    setSyncing(true);
+    await savePosts(posts[idx], 'savePost');
+    setSyncing(false);
+  }
+  render();
+  showToast('♻️ הפוסט שוחזר!');
+}
+
+async function hardDeletePost(id) {
+  if (!confirm('למחוק סופית?')) return;
   posts = posts.filter(p => p.id !== id);
   setSyncing(true);
   await savePosts({ id }, 'deletePost');
   setSyncing(false);
   render();
-  showToast('🗑 הפוסט נמחק');
+  showToast('🗑 נמחק סופית');
 }
 
 // ========== TAGS ==========
