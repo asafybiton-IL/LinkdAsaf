@@ -764,6 +764,208 @@
   }
   .restore-btn:hover { background: var(--accent); color: #fff; }
 
+
+  /* ========== MOBILE WRITING UX ========== */
+  @media (max-width: 768px) {
+    .modal-overlay {
+      align-items: flex-end;
+      padding: 0;
+    }
+
+    .modal {
+      border-radius: 20px 20px 0 0;
+      max-height: 92vh;
+      padding: 20px 16px 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header { flex-shrink: 0; margin-bottom: 16px; }
+
+    .modal-body-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 80px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #field-body {
+      min-height: 200px;
+      font-size: 16px !important;
+      line-height: 1.8;
+    }
+
+    .form-input, .form-select {
+      font-size: 16px !important;
+      padding: 14px 16px;
+    }
+
+    .form-label { font-size: 11px; margin-bottom: 6px; }
+
+    .form-row { margin-bottom: 16px; }
+
+    /* Sticky footer above keyboard */
+    .modal-footer {
+      position: sticky;
+      bottom: 0;
+      background: var(--surface);
+      padding: 12px 0 20px;
+      margin-top: 0;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 8px;
+    }
+
+    .modal-footer button {
+      flex: 1;
+      padding: 14px;
+      font-size: 15px;
+    }
+
+    /* Step indicator */
+    .mobile-steps {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+      padding: 0 2px;
+    }
+
+    .step-dot {
+      height: 3px;
+      flex: 1;
+      border-radius: 2px;
+      background: var(--border);
+      transition: background 0.2s;
+    }
+
+    .step-dot.active { background: var(--accent); }
+    .step-dot.done { background: var(--ready); }
+
+    .char-counter { font-size: 12px; margin-top: 6px; }
+  }
+
+  @media (min-width: 769px) {
+    .mobile-steps { display: none; }
+    .modal-body-scroll { overflow: visible; }
+  }
+
+
+  /* ========== LOGIN ========== */
+  .login-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 32px;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  }
+
+  .login-logo { font-size: 36px; margin-bottom: 12px; }
+  .login-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .login-sub { font-size: 13px; color: var(--text3); margin-bottom: 28px; }
+
+  .login-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-size: 16px;
+    font-family: 'Heebo', sans-serif;
+    outline: none;
+    text-align: center;
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+    direction: ltr;
+    transition: border-color 0.15s;
+  }
+
+  .login-input:focus { border-color: var(--accent); }
+  .login-input.error { border-color: var(--accent2); animation: shake 0.3s; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .login-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Heebo', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .login-btn:hover { background: #5b52ee; }
+  .login-error { color: var(--accent2); font-size: 13px; margin-top: 10px; min-height: 20px; }
+
+
+  /* ========== LOGIN TRACKER ========== */
+  .devices-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text3);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .devices-badge:hover { border-color: var(--accent); color: var(--accent); }
+
+  .devices-modal {
+    position: fixed;
+    top: 60px;
+    left: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    min-width: 280px;
+    z-index: 50;
+    box-shadow: var(--shadow);
+    display: none;
+  }
+  .devices-modal.open { display: block; }
+  .devices-modal h4 { font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text2); }
+  .device-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .device-row:last-child { border-bottom: none; }
+  .device-row .device-icon { font-size: 18px; }
+  .device-row .device-info { flex: 1; }
+  .device-row .device-time { color: var(--text3); font-size: 11px; }
+
 </style>
 </head>
 <body>
@@ -821,6 +1023,7 @@
         <input type="text" placeholder="חיפוש..." oninput="searchPosts(this.value)" />
       </div>
       <span id="sync-indicator" style="font-size:12px;color:var(--text3);">⏳ טוען...</span>
+      <span class="devices-badge" onclick="toggleDevices()" id="devices-badge" style="display:none">📱 <span id="devices-count">0</span> מכשירים</span>
       <div class="view-toggle">
         <button class="view-btn active" onclick="setView('grid', this)" title="גריד">⊞</button>
         <button class="view-btn" onclick="setView('list', this)" title="רשימה">☰</button>
@@ -865,49 +1068,60 @@
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
 
-    <div class="form-row">
-      <label class="form-label">נושא / כותרת</label>
-      <input type="text" class="form-input" id="field-title" placeholder="מה הנושא המרכזי של הפוסט?" />
+    <div class="mobile-steps">
+      <div class="step-dot done" id="step1"></div>
+      <div class="step-dot" id="step2"></div>
+      <div class="step-dot" id="step3"></div>
     </div>
 
-    <div class="form-row">
-      <label class="form-label">גוף הפוסט</label>
-      <textarea class="form-textarea" id="field-body" placeholder="כתוב את הפוסט כאן..." oninput="updateCharCount(this)"></textarea>
-      <div class="char-counter" id="char-counter">0 / 3000 תווים</div>
-    </div>
-
-    <div class="form-row">
-      <label class="form-label">הצעה לויז׳ואל</label>
-      <input type="text" class="form-input" id="field-visual" placeholder="תאר את התמונה / גרפיקה המוצעת..." />
-    </div>
-
-    <div class="form-row-2">
-      <div class="form-row" style="margin-bottom:0">
-        <label class="form-label">סטטוס</label>
-        <select class="form-select" id="field-status">
-          <option value="idea">💡 רעיון</option>
-          <option value="draft">✏️ דראפט</option>
-          <option value="ready">✅ מוכן לפרסום</option>
-          <option value="published">🚀 פורסם</option>
-        </select>
+    <div class="modal-body-scroll">
+      <div class="form-row">
+        <label class="form-label">נושא / כותרת</label>
+        <input type="text" class="form-input" id="field-title" placeholder="מה הנושא המרכזי של הפוסט?"
+          onfocus="setStep(1)" />
       </div>
-      <div class="form-row" style="margin-bottom:0">
-        <label class="form-label">תאריך מתוכנן</label>
-        <input type="date" class="form-input" id="field-date" />
-      </div>
-    </div>
 
-    <div class="form-row" style="margin-top:16px">
-      <label class="form-label">תגיות</label>
-      <div class="tags-input-area" id="tags-input-area" onclick="document.getElementById('tag-input').focus()">
-        <input type="text" class="tags-input" id="tag-input" placeholder="הוסף תגית ולחץ Enter..." onkeydown="handleTagInput(event)" />
+      <div class="form-row">
+        <label class="form-label">גוף הפוסט</label>
+        <textarea class="form-textarea" id="field-body" placeholder="כתוב את הפוסט כאן..."
+          oninput="updateCharCount(this)" onfocus="setStep(2)" style="min-height:180px"></textarea>
+        <div class="char-counter" id="char-counter">0 / 3000 תווים</div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">הצעה לויז׳ואל</label>
+        <input type="text" class="form-input" id="field-visual" placeholder="תאר את התמונה / גרפיקה המוצעת..."
+          onfocus="setStep(3)" />
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-row" style="margin-bottom:0">
+          <label class="form-label">סטטוס</label>
+          <select class="form-select" id="field-status">
+            <option value="idea">💡 רעיון</option>
+            <option value="draft">✏️ דראפט</option>
+            <option value="ready">✅ מוכן לפרסום</option>
+            <option value="published">🚀 פורסם</option>
+          </select>
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <label class="form-label">תאריך מתוכנן</label>
+          <input type="date" class="form-input" id="field-date" />
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-top:16px">
+        <label class="form-label">תגיות</label>
+        <div class="tags-input-area" id="tags-input-area" onclick="document.getElementById('tag-input').focus()">
+          <input type="text" class="tags-input" id="tag-input" placeholder="הוסף תגית ולחץ Enter..." onkeydown="handleTagInput(event)" />
+        </div>
       </div>
     </div>
 
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal()">ביטול</button>
-      <button class="btn-copy" id="copy-btn" onclick="copyPostText()" style="display:none">📋 העתק טקסט</button>
-      <button class="btn-primary" onclick="savePost()">שמור פוסט</button>
+      <button class="btn-copy" id="copy-btn" onclick="copyPostText()" style="display:none">📋 העתק</button>
+      <button class="btn-primary" onclick="savePost()">שמור</button>
     </div>
   </div>
 </div>
@@ -941,6 +1155,125 @@ const statusEmoji = {
   published: '🚀',
   deleted: '🗑'
 };
+
+
+// ========== LOGIN ==========
+const PASSWORD_HASH = '7c4f8b9e2a1d6f3c5e8a2b4d7f1c9e3a'; // Yaishps90
+
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(16).padStart(8, '0').repeat(4).slice(0, 32);
+}
+
+function checkLogin() {
+  const val = document.getElementById('login-input').value;
+  const input = document.getElementById('login-input');
+  const err = document.getElementById('login-error');
+
+  if (val === 'Yaishps90') {
+    localStorage.setItem('ayb_auth', simpleHash(val + 'salt_ayb'));
+    document.getElementById('login-overlay').style.display = 'none';
+    err.textContent = '';
+    logDeviceLogin();
+    init();
+  } else {
+    input.classList.add('error');
+    err.textContent = 'סיסמה שגויה, נסה שוב';
+    setTimeout(() => input.classList.remove('error'), 400);
+    input.value = '';
+  }
+}
+
+function checkAuth() {
+  const stored = localStorage.getItem('ayb_auth');
+  const expected = simpleHash('Yaishps90' + 'salt_ayb');
+  if (stored === expected) {
+    document.getElementById('login-overlay').style.display = 'none';
+    logDeviceLogin();
+    return true;
+  }
+  return false;
+}
+
+
+// ========== DEVICE TRACKING ==========
+function getDeviceInfo() {
+  const ua = navigator.userAgent;
+  let icon = '💻', name = 'מחשב';
+  if (/iPhone/.test(ua)) { icon = '📱'; name = 'iPhone'; }
+  else if (/iPad/.test(ua)) { icon = '📱'; name = 'iPad'; }
+  else if (/Android/.test(ua)) { icon = '📱'; name = 'Android'; }
+  else if (/Mac/.test(ua)) { icon = '💻'; name = 'Mac'; }
+  else if (/Windows/.test(ua)) { icon = '💻'; name = 'Windows'; }
+  return { icon, name };
+}
+
+function logDeviceLogin() {
+  const devices = JSON.parse(localStorage.getItem('ayb_devices') || '[]');
+  const { icon, name } = getDeviceInfo();
+  const now = Date.now();
+  // Remove duplicate from same device
+  const filtered = devices.filter(d => d.name !== name);
+  filtered.unshift({ icon, name, time: now });
+  // Keep last 5
+  const trimmed = filtered.slice(0, 5);
+  localStorage.setItem('ayb_devices', JSON.stringify(trimmed));
+  updateDevicesBadge();
+}
+
+function updateDevicesBadge() {
+  const devices = JSON.parse(localStorage.getItem('ayb_devices') || '[]');
+  const badge = document.getElementById('devices-badge');
+  const count = document.getElementById('devices-count');
+  if (badge && devices.length > 0) {
+    badge.style.display = 'inline-flex';
+    count.textContent = devices.length;
+  }
+}
+
+function toggleDevices() {
+  const modal = document.getElementById('devices-modal');
+  const devices = JSON.parse(localStorage.getItem('ayb_devices') || '[]');
+  
+  const list = document.getElementById('devices-list');
+  list.innerHTML = devices.map(d => {
+    const date = new Date(d.time);
+    const timeStr = date.toLocaleDateString('he-IL') + ' ' + date.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
+    return `<div class="device-row">
+      <span class="device-icon">${d.icon}</span>
+      <div class="device-info">
+        <div>${d.name}</div>
+        <div class="device-time">${timeStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  modal.classList.toggle('open');
+}
+
+// Close devices modal on outside click
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('devices-modal');
+  const badge = document.getElementById('devices-badge');
+  if (modal && badge && !modal.contains(e.target) && !badge.contains(e.target)) {
+    modal.classList.remove('open');
+  }
+});
+
+// ========== MOBILE STEPS ==========
+function setStep(n) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('step' + i);
+    if (!el) continue;
+    if (i < n) el.className = 'step-dot done';
+    else if (i === n) el.className = 'step-dot active';
+    else el.className = 'step-dot';
+  }
+}
 
 // ========== SYNC ==========
 function setSyncing(val, msg) {
@@ -1078,7 +1411,6 @@ function renderCard(post) {
         <div class="post-tags">${tags}</div>
         <div class="post-actions" style="opacity:1">
           <button class="restore-btn" onclick="event.stopPropagation();restorePost(${post.id})">♻️ שחזר</button>
-          <button class="action-btn danger" onclick="event.stopPropagation();hardDeletePost(${post.id})">🗑 מחק סופית</button>
         </div>
       </div>
     </div>`;
@@ -1302,7 +1634,33 @@ function showToast(msg) {
 }
 
 // ========== START ==========
-init();
+if (!checkAuth()) {
+  // Show login, init() called after successful login
+} else {
+  init();
+}
 </script>
+
+<!-- Login -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">📋</div>
+    <div class="login-title">פוסט מנג׳ר</div>
+    <div class="login-sub">אסף יעיש ביטון · LinkedIn</div>
+    <input type="password" class="login-input" id="login-input"
+      placeholder="••••••••"
+      onkeydown="if(event.key==='Enter') checkLogin()"
+      autocomplete="current-password" />
+    <button class="login-btn" onclick="checkLogin()">כניסה</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+
+<div class="devices-modal" id="devices-modal">
+  <h4>📱 כניסות אחרונות</h4>
+  <div id="devices-list"></div>
+</div>
+
 </body>
 </html>
