@@ -662,6 +662,83 @@
 
   .char-counter.warn { color: var(--draft); }
   .char-counter.over { color: var(--accent2); }
+
+  /* ========== MOBILE ========== */
+  @media (max-width: 768px) {
+    .layout { flex-direction: column; }
+
+    .sidebar {
+      width: 100%;
+      min-width: unset;
+      height: auto;
+      position: relative;
+      border-left: none;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo { padding: 16px 16px 12px; }
+    .sidebar-logo h1 { font-size: 16px; }
+
+    .new-post-btn { margin: 10px 12px; padding: 10px; }
+
+    /* Collapsible sidebar on mobile */
+    .sidebar-section,
+    .sidebar-btn:not(.active),
+    .tag-list { display: none; }
+
+    .sidebar-filters {
+      display: flex;
+      overflow-x: auto;
+      gap: 6px;
+      padding: 8px 12px;
+      scrollbar-width: none;
+    }
+
+    .sidebar-filters::-webkit-scrollbar { display: none; }
+
+    .sidebar-btn {
+      display: inline-flex !important;
+      white-space: nowrap;
+      flex-shrink: 0;
+      width: auto !important;
+      margin: 0;
+      padding: 7px 14px;
+      font-size: 13px;
+    }
+
+    .topbar {
+      padding: 12px 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .topbar h2 { font-size: 16px; width: 100%; }
+
+    .search-box { width: 100%; flex: 1; }
+
+    .stats-bar { overflow-x: auto; }
+    .stat-item { min-width: 80px; padding: 12px 10px; }
+    .stat-item .num { font-size: 22px; }
+    .stat-item .label { font-size: 10px; }
+
+    .posts-area { padding: 16px; }
+
+    .posts-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+    .post-card { padding: 16px; }
+    .post-actions { opacity: 1 !important; }
+
+    .modal { padding: 20px 16px; border-radius: 16px 16px 0 0; }
+    .modal-overlay { align-items: flex-end; padding: 0; }
+
+    .form-row-2 { grid-template-columns: 1fr; }
+
+    .modal-footer { flex-wrap: wrap; }
+    .modal-footer button { flex: 1; min-width: 120px; }
+  }
+
 </style>
 </head>
 <body>
@@ -679,7 +756,7 @@
     </button>
 
     <div class="sidebar-section">סטטוס</div>
-
+    <div class="sidebar-filters">
     <button class="sidebar-btn active" onclick="filterStatus('all', this)">
       <span>📁</span> הכל
       <span class="count-badge" id="count-all">0</span>
@@ -700,6 +777,7 @@
       <span class="dot" style="background:var(--published)"></span> פורסם
       <span class="count-badge" id="count-published">0</span>
     </button>
+    </div>
 
     <div class="sidebar-section">תגיות</div>
     <div class="tag-list" id="sidebar-tags"></div>
