@@ -977,6 +977,163 @@
   .autosave-indicator.saving { color: var(--draft); }
   .autosave-indicator.saved { color: var(--ready); }
 
+
+  /* ========== MULTI WINDOW ========== */
+  @media (min-width: 769px) {
+    .modal-overlay { display: none !important; }
+
+    .windows-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .post-window {
+      position: absolute;
+      width: 480px;
+      max-height: 85vh;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      pointer-events: all;
+      transition: box-shadow 0.15s;
+      overflow: hidden;
+    }
+
+    .post-window.active {
+      border-color: var(--accent);
+      box-shadow: 0 24px 80px rgba(108,99,255,0.3);
+      z-index: 110 !important;
+    }
+
+    .post-window-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      cursor: move;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .post-window-title {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text2);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .window-action-btn {
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      border: none;
+      background: var(--surface3);
+      color: var(--text3);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .window-action-btn:hover { background: var(--accent2); color: #fff; }
+    .window-action-btn.minimize { background: var(--surface3); }
+    .window-action-btn.minimize:hover { background: var(--draft); color: #000; }
+
+    .post-window-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .post-window.minimized .post-window-body,
+    .post-window.minimized .post-window-footer { display: none; }
+    .post-window.minimized { max-height: 48px; }
+
+    .post-window-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+      background: var(--surface);
+    }
+
+    /* Windows taskbar */
+    .windows-taskbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 16px;
+      z-index: 90;
+      overflow-x: auto;
+    }
+
+    .taskbar-tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      cursor: pointer;
+      white-space: nowrap;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .taskbar-tab:hover { border-color: var(--accent); color: var(--text); }
+    .taskbar-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    .taskbar-new-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      background: none;
+      border: 1px dashed var(--border);
+      color: var(--text3);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Heebo', sans-serif;
+      flex-shrink: 0;
+    }
+
+    .taskbar-new-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .posts-area { padding-bottom: 60px; }
+  }
+
+  @media (max-width: 768px) {
+    .windows-container, .windows-taskbar { display: none; }
+  }
+
 </style>
 </head>
 <body>
@@ -989,7 +1146,7 @@
       <span>LinkedIn · אסף יעיש ביטון</span>
     </div>
 
-    <button class="new-post-btn" onclick="openModal()">
+    <button class="new-post-btn" onclick="isDesktop() ? openWindow() : openModal()">
       ＋ פוסט חדש
     </button>
 
@@ -1139,6 +1296,12 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Multi-window system (desktop only) -->
+<div class="windows-container" id="windows-container"></div>
+<div class="windows-taskbar" id="windows-taskbar">
+  <button class="taskbar-new-btn" onclick="openWindow()">＋ פוסט חדש</button>
+</div>
 
 <script>
 // ========== STATE ==========
@@ -1385,6 +1548,240 @@ async function checkImport() {
   }
 }
 
+
+// ========== MULTI-WINDOW SYSTEM (Desktop) ==========
+let windows = {};
+let windowZIndex = 110;
+let windowCount = 0;
+
+function isDesktop() { return window.innerWidth > 768; }
+
+function openWindow(post = null) {
+  if (!isDesktop()) { openModal(post); return; }
+
+  const winId = 'win_' + (++windowCount);
+  const isNew = !post;
+
+  // Create window element
+  const win = document.createElement('div');
+  win.className = 'post-window active';
+  win.id = winId;
+  win.style.zIndex = ++windowZIndex;
+
+  // Position cascaded
+  const offset = (windowCount % 6) * 30;
+  win.style.top = (80 + offset) + 'px';
+  win.style.right = (20 + offset) + 'px';
+
+  const title = post ? (post.title || 'ללא כותרת') : 'פוסט חדש';
+
+  win.innerHTML = `
+    <div class="post-window-header" onmousedown="startDrag(event, '${winId}')">
+      <span class="post-window-title" id="wtitle_${winId}">${title}</span>
+      <button class="window-action-btn minimize" onclick="toggleMinimize('${winId}')" title="מזער">─</button>
+      <button class="window-action-btn" onclick="closeWindow('${winId}')" title="סגור">×</button>
+    </div>
+    <div class="post-window-body">
+      <div class="form-row">
+        <label class="form-label">נושא / כותרת</label>
+        <input type="text" class="form-input" id="wf_title_${winId}" placeholder="מה הנושא?" value="${post ? (post.title||'') : ''}"
+          oninput="updateWindowTitle('${winId}', this.value); markWindowChanged('${winId}')" />
+      </div>
+      <div class="form-row">
+        <label class="form-label">גוף הפוסט</label>
+        <textarea class="form-textarea" id="wf_body_${winId}" placeholder="כתוב את הפוסט כאן..." style="min-height:160px"
+          oninput="updateCharCountWindow('${winId}'); markWindowChanged('${winId}')">${post ? (post.body||'') : ''}</textarea>
+        <div class="char-counter" id="wchar_${winId}">0 / 3000 תווים</div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">הצעה לויז׳ואל</label>
+        <input type="text" class="form-input" id="wf_visual_${winId}" placeholder="תאר את הויז'ואל..."
+          value="${post ? (post.visual||'') : ''}" oninput="markWindowChanged('${winId}')" />
+      </div>
+      <div class="form-row-2">
+        <div class="form-row" style="margin-bottom:0">
+          <label class="form-label">סטטוס</label>
+          <select class="form-select" id="wf_status_${winId}" onchange="markWindowChanged('${winId}')">
+            <option value="idea" ${post && post.status==='idea' ? 'selected' : ''}>💡 רעיון</option>
+            <option value="draft" ${post && post.status==='draft' ? 'selected' : (!post ? '' : '')}>✏️ דראפט</option>
+            <option value="ready" ${post && post.status==='ready' ? 'selected' : ''}>✅ מוכן לפרסום</option>
+            <option value="published" ${post && post.status==='published' ? 'selected' : ''}>🚀 פורסם</option>
+          </select>
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <label class="form-label">תאריך</label>
+          <input type="date" class="form-input" id="wf_date_${winId}" value="${post ? (post.date||'') : ''}"
+            onchange="markWindowChanged('${winId}')" />
+        </div>
+      </div>
+    </div>
+    <div class="post-window-footer">
+      <span class="autosave-indicator" id="wasave_${winId}"></span>
+      <button class="btn-copy" onclick="copyWindowText('${winId}')">📋 העתק</button>
+      <button class="btn-primary" style="flex:1" onclick="saveWindow('${winId}', ${post ? post.id : 'null'}, ${post ? post.created : 'null'})">שמור</button>
+    </div>
+  `;
+
+  document.getElementById('windows-container').appendChild(win);
+
+  // Deactivate other windows
+  activateWindow(winId);
+
+  // Add to taskbar
+  addTaskbarTab(winId, title);
+
+  // Init char counter
+  setTimeout(() => updateCharCountWindow(winId), 50);
+
+  // Start autosave for window
+  startWindowAutosave(winId, post ? post.id : null, post ? post.created : null);
+
+  windows[winId] = { id: post ? post.id : null, created: post ? post.created : null, changed: false, autosaveTimer: null };
+}
+
+function activateWindow(winId) {
+  Object.keys(windows).forEach(id => {
+    const w = document.getElementById(id);
+    if (w) w.classList.remove('active');
+    const tab = document.getElementById('tab_' + id);
+    if (tab) tab.classList.remove('active');
+  });
+  const win = document.getElementById(winId);
+  if (win) { win.classList.add('active'); win.style.zIndex = ++windowZIndex; }
+  const tab = document.getElementById('tab_' + winId);
+  if (tab) tab.classList.add('active');
+}
+
+function closeWindow(winId) {
+  const win = document.getElementById(winId);
+  if (win) win.remove();
+  const tab = document.getElementById('tab_' + winId);
+  if (tab) tab.remove();
+  if (windows[winId] && windows[winId].autosaveTimer) clearInterval(windows[winId].autosaveTimer);
+  delete windows[winId];
+}
+
+function toggleMinimize(winId) {
+  const win = document.getElementById(winId);
+  if (win) win.classList.toggle('minimized');
+}
+
+function updateWindowTitle(winId, val) {
+  const tab = document.getElementById('tab_' + winId);
+  const header = document.getElementById('wtitle_' + winId);
+  const short = val.substring(0, 20) || 'פוסט חדש';
+  if (tab) tab.querySelector('span').textContent = short;
+  if (header) header.textContent = short;
+}
+
+function updateCharCountWindow(winId) {
+  const body = document.getElementById('wf_body_' + winId);
+  const counter = document.getElementById('wchar_' + winId);
+  if (!body || !counter) return;
+  const len = body.value.length;
+  counter.textContent = len + ' / 3000 תווים';
+  counter.className = 'char-counter' + (len > 3000 ? ' over' : len > 2500 ? ' warn' : '');
+}
+
+function markWindowChanged(winId) {
+  if (windows[winId]) windows[winId].changed = true;
+}
+
+function copyWindowText(winId) {
+  const body = document.getElementById('wf_body_' + winId);
+  if (body) navigator.clipboard.writeText(body.value).then(() => showToast('📋 הועתק!'));
+}
+
+async function saveWindow(winId, existingId, existingCreated) {
+  const title = document.getElementById('wf_title_' + winId)?.value.trim() || '';
+  const body = document.getElementById('wf_body_' + winId)?.value.trim() || '';
+  const visual = document.getElementById('wf_visual_' + winId)?.value.trim() || '';
+  const status = document.getElementById('wf_status_' + winId)?.value || 'idea';
+  const date = document.getElementById('wf_date_' + winId)?.value || '';
+
+  if (!title && !body) { showToast('⚠️ הוסף כותרת או תוכן'); return; }
+
+  const postId = existingId || windows[winId]?.id || Date.now();
+  const created = existingCreated || windows[winId]?.created || Date.now();
+
+  const postData = { id: postId, created, title, body, visual, status, tags: [], date };
+
+  const idx = posts.findIndex(p => p.id === postId);
+  if (idx !== -1) posts[idx] = postData;
+  else posts.unshift(postData);
+
+  if (windows[winId]) { windows[winId].id = postId; windows[winId].created = created; windows[winId].changed = false; }
+
+  setSyncing(true);
+  await savePosts(postData, 'savePost');
+  setSyncing(false);
+  render();
+
+  const indicator = document.getElementById('wasave_' + winId);
+  if (indicator) { indicator.textContent = '✅ נשמר'; indicator.className = 'autosave-indicator saved'; setTimeout(() => { indicator.textContent = ''; }, 2000); }
+
+  showToast('✅ נשמר!');
+  updateWindowTitle(winId, title);
+}
+
+function startWindowAutosave(winId, existingId, existingCreated) {
+  const timer = setInterval(async () => {
+    if (!windows[winId] || !windows[winId].changed) return;
+    const title = document.getElementById('wf_title_' + winId)?.value.trim() || '';
+    const body = document.getElementById('wf_body_' + winId)?.value.trim() || '';
+    if (!title && !body) return;
+    windows[winId].changed = false;
+    const indicator = document.getElementById('wasave_' + winId);
+    if (indicator) { indicator.textContent = '💾 שומר...'; indicator.className = 'autosave-indicator saving'; }
+    await saveWindow(winId, existingId, existingCreated);
+  }, 30000);
+  if (windows[winId]) windows[winId].autosaveTimer = timer;
+}
+
+function addTaskbarTab(winId, title) {
+  const taskbar = document.getElementById('windows-taskbar');
+  const tab = document.createElement('div');
+  tab.className = 'taskbar-tab active';
+  tab.id = 'tab_' + winId;
+  tab.innerHTML = `<span>${title.substring(0,20) || 'פוסט חדש'}</span>`;
+  tab.onclick = () => {
+    const win = document.getElementById(winId);
+    if (win && win.classList.contains('minimized')) win.classList.remove('minimized');
+    activateWindow(winId);
+  };
+  taskbar.insertBefore(tab, taskbar.querySelector('.taskbar-new-btn'));
+}
+
+// Drag logic
+let dragging = null, dragOffX = 0, dragOffY = 0;
+
+function startDrag(e, winId) {
+  activateWindow(winId);
+  dragging = winId;
+  const win = document.getElementById(winId);
+  const rect = win.getBoundingClientRect();
+  dragOffX = e.clientX - rect.left;
+  dragOffY = e.clientY - rect.top;
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', stopDrag);
+}
+
+function onDrag(e) {
+  if (!dragging) return;
+  const win = document.getElementById(dragging);
+  if (!win) return;
+  const x = window.innerWidth - e.clientX + dragOffX - win.offsetWidth;
+  const y = e.clientY - dragOffY;
+  win.style.right = Math.max(0, x) + 'px';
+  win.style.top = Math.max(0, y) + 'px';
+}
+
+function stopDrag() {
+  dragging = null;
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+}
+
 // ========== MOBILE STEPS ==========
 function setStep(n) {
   for (let i = 1; i <= 3; i++) {
@@ -1558,6 +1955,7 @@ function renderCard(post) {
 
 // ========== MODAL ==========
 function openModal(post = null) {
+  if (isDesktop()) { openWindow(post); return; }
   editingId = post ? post.id : null;
   currentTags = post ? [...post.tags] : [];
 
