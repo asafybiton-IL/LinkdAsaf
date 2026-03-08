@@ -32,6 +32,8 @@
   .tag-list { padding:4px 8px; }
   .tag-chip { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; margin:3px 4px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:1.5px solid var(--border); color:var(--text2); background:none; transition:all 0.15s; font-family:'Heebo',sans-serif; }
   .tag-chip:hover, .tag-chip.active { border-color:var(--accent); color:var(--accent); background:rgba(108,99,255,0.08); }
+  .sidebar-btn.drop-target { background:rgba(108,99,255,0.25) !important; border:2px dashed var(--accent) !important; color:#fff !important; transition:all 0.1s; }
+  .tag-chip.drop-target { border-color:var(--accent3) !important; background:rgba(67,233,123,0.2) !important; color:var(--accent3) !important; transform:scale(1.08); transition:all 0.1s; }
   .new-post-btn { margin:16px; padding:12px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:'Heebo',sans-serif; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; }
   .new-post-btn:hover { background:#5b52ee; transform:translateY(-1px); box-shadow:0 4px 20px rgba(108,99,255,0.4); }
 
@@ -127,6 +129,13 @@
   .autosave-indicator { font-size:11px; color:var(--text3); margin-right:auto; transition:color 0.3s; }
   .autosave-indicator.saving { color:var(--draft); }
   .autosave-indicator.saved { color:var(--ready); }
+
+
+  /* SIDEBAR DROP TARGETS */
+  .sidebar-btn.drop-target { background: rgba(108,99,255,0.2) !important; border: 2px dashed var(--accent) !important; color: var(--accent) !important; transform: scale(1.02); transition: all 0.15s; }
+  .tag-chip.drop-target { border-color: var(--accent) !important; color: var(--accent) !important; background: rgba(108,99,255,0.2) !important; transform: scale(1.05); }
+  .post-card[draggable="true"] { cursor: grab; }
+  .post-card[draggable="true"]:active { cursor: grabbing; }
 
   /* TOAST */
   .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--surface3); border:1px solid var(--border); color:var(--text); padding:12px 20px; border-radius:10px; font-size:14px; font-weight:500; z-index:500; transition:transform 0.3s; box-shadow:var(--shadow); }
@@ -245,15 +254,15 @@
       <h1>📋 פוסט מנג׳ר</h1>
       <span>LinkedIn · אסף יעיש ביטון</span>
     </div>
-    <button class="new-post-btn" onclick="isDesktop() ? openWindow() : openModal()">＋ פוסט חדש</button>
+    <button class="new-post-btn" onclick="isDesktop() ? openWindow(null, currentFilter !== 'all' && currentFilter !== 'deleted' ? currentFilter : null, filterTag) : openModal(null, currentFilter !== 'all' && currentFilter !== 'deleted' ? currentFilter : null, filterTag)">＋ פוסט חדש</button>
     <div class="sidebar-section">סטטוס</div>
     <div class="sidebar-filters">
       <button class="sidebar-btn active" onclick="filterStatus('all',this)"><span>📁</span> הכל <span class="count-badge" id="count-all">0</span></button>
-      <button class="sidebar-btn" onclick="filterStatus('idea',this)"><span class="dot" style="background:var(--idea)"></span> רעיון <span class="count-badge" id="count-idea">0</span></button>
-      <button class="sidebar-btn" onclick="filterStatus('draft',this)"><span class="dot" style="background:var(--draft)"></span> דראפט <span class="count-badge" id="count-draft">0</span></button>
-      <button class="sidebar-btn" onclick="filterStatus('ready',this)"><span class="dot" style="background:var(--ready)"></span> מוכן לפרסום <span class="count-badge" id="count-ready">0</span></button>
-      <button class="sidebar-btn" onclick="filterStatus('published',this)"><span class="dot" style="background:var(--published)"></span> פורסם <span class="count-badge" id="count-published">0</span></button>
-      <button class="sidebar-btn" onclick="filterStatus('deleted',this)"><span>🗑</span> נמחקו לאחרונה <span class="count-badge" id="count-deleted">0</span></button>
+      <button class="sidebar-btn" onclick="filterStatus('idea',this)" ondragover="sidebarDragOver(event,'idea')" ondragleave="sidebarDragLeave(event)" ondrop="sidebarDrop(event,'idea')"><span class="dot" style="background:var(--idea)"></span> רעיון <span class="count-badge" id="count-idea">0</span></button>
+      <button class="sidebar-btn" onclick="filterStatus('draft',this)" ondragover="sidebarDragOver(event,'draft')" ondragleave="sidebarDragLeave(event)" ondrop="sidebarDrop(event,'draft')"><span class="dot" style="background:var(--draft)"></span> דראפט <span class="count-badge" id="count-draft">0</span></button>
+      <button class="sidebar-btn" onclick="filterStatus('ready',this)" ondragover="sidebarDragOver(event,'ready')" ondragleave="sidebarDragLeave(event)" ondrop="sidebarDrop(event,'ready')"><span class="dot" style="background:var(--ready)"></span> מוכן לפרסום <span class="count-badge" id="count-ready">0</span></button>
+      <button class="sidebar-btn" onclick="filterStatus('published',this)" ondragover="sidebarDragOver(event,'published')" ondragleave="sidebarDragLeave(event)" ondrop="sidebarDrop(event,'published')"><span class="dot" style="background:var(--published)"></span> פורסם <span class="count-badge" id="count-published">0</span></button>
+      <button class="sidebar-btn" onclick="filterStatus('deleted',this)" ondragover="sidebarDragOver(event,'deleted')" ondragleave="sidebarDragLeave(event)" ondrop="sidebarDrop(event,'deleted')"><span>🗑</span> נמחקו לאחרונה <span class="count-badge" id="count-deleted">0</span></button>
     </div>
     <div class="sidebar-section">תגיות</div>
     <div class="tag-list" id="sidebar-tags"></div>
@@ -321,7 +330,7 @@
 <!-- Multi-window (desktop) -->
 <div class="windows-container" id="windows-container"></div>
 <div class="windows-taskbar" id="windows-taskbar">
-  <button class="taskbar-new-btn" onclick="openWindow()">＋ פוסט חדש</button>
+  <button class="taskbar-new-btn" onclick="openWindow(null, currentFilter !== 'all' && currentFilter !== 'deleted' ? currentFilter : null, filterTag)">＋ פוסט חדש</button>
 </div>
 
 <!-- Devices panel -->
@@ -537,6 +546,9 @@ function updateSidebarTags() {
     chip.className = 'tag-chip' + (filterTag === tag ? ' active' : '');
     chip.textContent = tag;
     chip.onclick = () => filterByTag(filterTag === tag ? null : tag);
+    chip.addEventListener('dragover', (e) => { e.preventDefault(); chip.classList.add('drop-target'); });
+    chip.addEventListener('dragleave', () => chip.classList.remove('drop-target'));
+    chip.addEventListener('drop', (e) => { e.preventDefault(); chip.classList.remove('drop-target'); dropToTag(tag); });
     container.appendChild(chip);
   });
 }
@@ -644,15 +656,17 @@ function renderCard(post) {
 // ========== MODAL (mobile) ==========
 function isDesktop() { return window.innerWidth > 768; }
 
-function openModal(post = null) {
-  if (isDesktop()) { openWindow(post); return; }
+function openModal(post = null, contextStatus = null, contextTag = null) {
+  if (isDesktop()) { openWindow(post, contextStatus, contextTag); return; }
+  const inheritStatus = contextStatus || (post ? null : (currentFilter !== 'all' && currentFilter !== 'deleted' ? currentFilter : null));
+  const inheritTag = contextTag || (post ? null : filterTag);
   editingId = post ? post.id : null;
-  currentTags = post ? [...(post.tags||[])] : [];
+  currentTags = post ? [...(post.tags||[])] : (inheritTag ? [inheritTag] : []);
   document.getElementById('modal-title').textContent = post ? 'עריכת פוסט' : 'פוסט חדש';
   document.getElementById('field-title').value = post ? (post.title||'') : '';
   document.getElementById('field-body').value = post ? (post.body||'') : '';
   document.getElementById('field-visual').value = post ? (post.visual||'') : '';
-  document.getElementById('field-status').value = post ? post.status : 'idea';
+  document.getElementById('field-status').value = post ? post.status : (inheritStatus || 'idea');
   document.getElementById('field-date').value = post ? (post.date||'') : '';
   document.getElementById('copy-btn').style.display = post ? 'block' : 'none';
   renderTagChips();
@@ -805,8 +819,10 @@ function closeTagsDrawer() { document.getElementById('tags-drawer').classList.re
 function filterByTagMobile(tag, btn) { window.activeTagFilter = tag; filterByTag(tag); closeTagsDrawer(); }
 
 // ========== MULTI-WINDOW (desktop) ==========
-function openWindow(post = null) {
-  if (!isDesktop()) { openModal(post); return; }
+function openWindow(post = null, contextStatus = null, contextTag = null) {
+  if (!isDesktop()) { openModal(post, contextStatus, contextTag); return; }
+  const inheritStatus = contextStatus || (post ? null : (currentFilter !== 'all' && currentFilter !== 'deleted' ? currentFilter : 'idea'));
+  const inheritTag = contextTag || (post ? null : filterTag);
   const winId = 'win_' + (++windowCount);
   const win = document.createElement('div');
   win.className = 'post-window active';
@@ -816,6 +832,8 @@ function openWindow(post = null) {
   win.style.top = (80 + offset) + 'px';
   win.style.right = (20 + offset) + 'px';
   const title = post ? (post.title||'ללא כותרת') : 'פוסט חדש';
+  const initStatus = post ? post.status : (inheritStatus || 'idea');
+  const initTags = post ? (post.tags||[]) : (inheritTag ? [inheritTag] : []);
   win.innerHTML = `
     <div class="post-window-header" onmousedown="startDrag(event,'${winId}')">
       <span class="post-window-title" id="wtitle_${winId}">${title}</span>
@@ -828,10 +846,10 @@ function openWindow(post = null) {
       <div class="form-row"><label class="form-label">הצעה לויז׳ואל</label><input type="text" class="form-input" id="wf_visual_${winId}" placeholder="תאר את הויז'ואל..." value="${post?(post.visual||''):''}" oninput="markWindowChanged('${winId}')" /></div>
       <div class="form-row-2">
         <div class="form-row" style="margin-bottom:0"><label class="form-label">סטטוס</label><select class="form-select" id="wf_status_${winId}" onchange="markWindowChanged('${winId}')">
-          <option value="idea" ${post&&post.status==='idea'?'selected':(!post?'selected':'')}>💡 רעיון</option>
-          <option value="draft" ${post&&post.status==='draft'?'selected':''}>✏️ דראפט</option>
-          <option value="ready" ${post&&post.status==='ready'?'selected':''}>✅ מוכן לפרסום</option>
-          <option value="published" ${post&&post.status==='published'?'selected':''}>🚀 פורסם</option>
+          <option value="idea" ${initStatus==='idea'?'selected':''}>💡 רעיון</option>
+          <option value="draft" ${initStatus==='draft'?'selected':''}>✏️ דראפט</option>
+          <option value="ready" ${initStatus==='ready'?'selected':''}>✅ מוכן לפרסום</option>
+          <option value="published" ${initStatus==='published'?'selected':''}>🚀 פורסם</option>
         </select></div>
         <div class="form-row" style="margin-bottom:0"><label class="form-label">תאריך</label><input type="date" class="form-input" id="wf_date_${winId}" value="${post?(post.date||''):''}" onchange="markWindowChanged('${winId}')" /></div>
       </div>
@@ -844,9 +862,24 @@ function openWindow(post = null) {
   document.getElementById('windows-container').appendChild(win);
   activateWindow(winId);
   addTaskbarTab(winId, title);
+  // Show context hint if inherited
+  if (!post && (inheritStatus || inheritTag)) {
+    const hints = [];
+    if (inheritStatus && inheritStatus !== 'idea') hints.push(statusEmoji[inheritStatus] + ' ' + statusLabels[inheritStatus]);
+    if (inheritTag) hints.push('🏷️ ' + inheritTag);
+    if (hints.length) showToast('פוסט חדש: ' + hints.join(' · '));
+  }
   setTimeout(() => updateCharCountWindow(winId), 50);
   startWindowAutosave(winId, post ? post.id : null, post ? post.created : null);
-  windows[winId] = { id: post ? post.id : null, created: post ? post.created : null, changed: false, autosaveTimer: null };
+  windows[winId] = { id: post ? post.id : null, created: post ? post.created : null, changed: false, autosaveTimer: null, tags: initTags };
+  // Render initial tags in window
+  if (initTags.length > 0) {
+    const tagArea = win.querySelector('.window-tags-area');
+    if (tagArea) {
+      windows[winId].tagsList = [...initTags];
+      renderWindowTags(winId);
+    }
+  }
 }
 
 function activateWindow(winId) {
@@ -950,6 +983,45 @@ function onDrag(e) {
 }
 
 function stopDrag() { dragging = null; document.removeEventListener('mousemove', onDrag); document.removeEventListener('mouseup', stopDrag); }
+
+// ========== SIDEBAR DRAG & DROP ==========
+function sidebarDragOver(e, status) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drop-target');
+}
+function sidebarDragLeave(e) {
+  e.currentTarget.classList.remove('drop-target');
+}
+function sidebarDrop(e, status) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drop-target');
+  if (!dragSrcId) return;
+  const idx = posts.findIndex(p => p.id === dragSrcId);
+  if (idx === -1) return;
+  const oldStatus = posts[idx].status;
+  if (oldStatus === status) return;
+  posts[idx].status = status;
+  if (status === 'deleted') posts[idx].deletedAt = Date.now();
+  else delete posts[idx].deletedAt;
+  posts[idx].updated = Date.now();
+  savePosts(posts[idx], 'savePost');
+  render();
+  showToast(statusEmoji[status] + ' הועבר ל' + statusLabels[status]);
+}
+function dropToTag(tag) {
+  if (!dragSrcId) return;
+  const idx = posts.findIndex(p => p.id === dragSrcId);
+  if (idx === -1) return;
+  if (!(posts[idx].tags || []).includes(tag)) {
+    posts[idx].tags = [...(posts[idx].tags || []), tag];
+    posts[idx].updated = Date.now();
+    savePosts(posts[idx], 'savePost');
+    render();
+    showToast('🏷️ תגית "' + tag + '" נוספה');
+  } else {
+    showToast('🏷️ התגית כבר קיימת');
+  }
+}
 
 // ========== START ==========
 if (!checkAuth()) {
