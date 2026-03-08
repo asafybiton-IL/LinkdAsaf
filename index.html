@@ -1134,6 +1134,133 @@
     .windows-container, .windows-taskbar { display: none; }
   }
 
+
+  /* ========== MOBILE TAGS DRAWER ========== */
+  @media (max-width: 768px) {
+    .mobile-tags-fab {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      cursor: pointer;
+      z-index: 80;
+      transition: all 0.2s;
+    }
+    .mobile-tags-fab:hover { border-color: var(--accent); color: var(--accent); }
+    .mobile-tags-fab .fab-count {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-tags-drawer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-radius: 20px 20px 0 0;
+      padding: 16px 16px 32px;
+      z-index: 200;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    .mobile-tags-drawer.open { transform: translateY(0); }
+
+    .drawer-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+
+    .drawer-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--text);
+    }
+
+    .drawer-tags-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .drawer-tag-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Heebo', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .drawer-tag-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .drawer-tag-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .drawer-tag-btn .tag-count { font-size: 11px; opacity: 0.7; }
+
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 199;
+      display: none;
+    }
+    .drawer-overlay.open { display: block; }
+  }
+
+  @media (min-width: 769px) {
+    .mobile-tags-fab,
+    .mobile-tags-drawer,
+    .drawer-overlay { display: none !important; }
+  }
+
+
+  .sort-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text2);
+    padding: 6px 10px;
+    font-size: 12px;
+    font-family: 'Heebo', sans-serif;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .sort-select:hover, .sort-select:focus { border-color: var(--accent); color: var(--text); }
+
 </style>
 </head>
 <body>
@@ -1192,6 +1319,15 @@
       </div>
       <span id="sync-indicator" style="font-size:12px;color:var(--text3);">⏳ טוען...</span>
       <span class="devices-badge" onclick="toggleDevices()" id="devices-badge" style="display:none">📱 <span id="devices-count">0</span> מכשירים</span>
+      <select class="sort-select" id="sort-select" onchange="setSort(this.value)" title="מיון">
+        <option value="created_desc">🕒 חדש לישן</option>
+        <option value="created_asc">🕒 ישן לחדש</option>
+        <option value="updated_desc">✏️ עדכון אחרון</option>
+        <option value="status">📊 לפי סטטוס</option>
+        <option value="length_desc">📝 ארוך לקצר</option>
+        <option value="length_asc">📝 קצר לארוך</option>
+        <option value="tag">🏷️ לפי תגית</option>
+      </select>
       <div class="view-toggle">
         <button class="view-btn active" onclick="setView('grid', this)" title="גריד">⊞</button>
         <button class="view-btn" onclick="setView('list', this)" title="רשימה">☰</button>
@@ -1350,7 +1486,7 @@ function checkLogin() {
   const err = document.getElementById('login-error');
 
   if (val === 'Yaishps90') {
-    localStorage.setItem('ayb_auth', simpleHash(val + 'salt_ayb'));
+    localStorage.setItem('ayb_auth', 'ayb_authenticated_2024');
     document.getElementById('login-overlay').style.display = 'none';
     err.textContent = '';
     logDeviceLogin();
@@ -1365,8 +1501,7 @@ function checkLogin() {
 
 function checkAuth() {
   const stored = localStorage.getItem('ayb_auth');
-  const expected = simpleHash('Yaishps90' + 'salt_ayb');
-  if (stored === expected) {
+  if (stored === 'ayb_authenticated_2024') {
     document.getElementById('login-overlay').style.display = 'none';
     logDeviceLogin();
     return true;
@@ -1712,16 +1847,13 @@ async function saveWindow(winId, existingId, existingCreated) {
 
   if (windows[winId]) { windows[winId].id = postId; windows[winId].created = created; windows[winId].changed = false; }
 
-  setSyncing(true);
-  await savePosts(postData, 'savePost');
-  setSyncing(false);
   render();
-
   const indicator = document.getElementById('wasave_' + winId);
   if (indicator) { indicator.textContent = '✅ נשמר'; indicator.className = 'autosave-indicator saved'; setTimeout(() => { indicator.textContent = ''; }, 2000); }
-
   showToast('✅ נשמר!');
   updateWindowTitle(winId, title);
+  // Save to Sheets in background
+  savePosts(postData, 'savePost');
 }
 
 function startWindowAutosave(winId, existingId, existingCreated) {
@@ -1782,6 +1914,68 @@ function stopDrag() {
   document.removeEventListener('mouseup', stopDrag);
 }
 
+
+// ========== MOBILE TAGS DRAWER ==========
+function openTagsDrawer() {
+  document.getElementById('tags-drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  renderDrawerTags();
+}
+
+function closeTagsDrawer() {
+  document.getElementById('tags-drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+function renderDrawerTags() {
+  const tagCounts = {};
+  posts.filter(p => p.status !== 'deleted').forEach(p => {
+    (p.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
+  });
+
+  const container = document.getElementById('drawer-tags-list');
+  const fab = document.getElementById('fab-count');
+  const tags = Object.entries(tagCounts).sort((a,b) => b[1]-a[1]);
+
+  // Update fab badge
+  if (tags.length > 0) {
+    fab.style.display = 'flex';
+    fab.textContent = tags.length;
+  } else {
+    fab.style.display = 'none';
+  }
+
+  if (tags.length === 0) {
+    container.innerHTML = '<p style="color:var(--text3);font-size:13px">אין תגיות עדיין</p>';
+    return;
+  }
+
+  // All button
+  const allActive = !window.activeTagFilter;
+  container.innerHTML = `
+    <button class="drawer-tag-btn ${allActive ? 'active' : ''}" onclick="filterByTagMobile(null, this)">
+      📁 הכל
+    </button>
+    ${tags.map(([tag, count]) => `
+      <button class="drawer-tag-btn ${window.activeTagFilter === tag ? 'active' : ''}"
+        onclick="filterByTagMobile('${tag}', this)">
+        #${tag} <span class="tag-count">${count}</span>
+      </button>
+    `).join('')}
+  `;
+}
+
+function filterByTagMobile(tag, btn) {
+  window.activeTagFilter = tag;
+  // Sync with sidebar tag filter
+  filterByTag(tag);
+  closeTagsDrawer();
+
+  // Update active state in drawer
+  document.querySelectorAll('.drawer-tag-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
 // ========== MOBILE STEPS ==========
 function setStep(n) {
   for (let i = 1; i <= 3; i++) {
@@ -1825,13 +2019,23 @@ function render() {
   updateStats();
   updateSidebarTags();
   renderPosts();
+  // Update mobile tags fab badge
+  if (typeof renderDrawerTags === 'function') {
+    const tagCounts = {};
+    posts.filter(p => p.status !== 'deleted').forEach(p => {
+      (p.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
+    });
+    const count = Object.keys(tagCounts).length;
+    const fab = document.getElementById('fab-count');
+    if (fab) { fab.style.display = count > 0 ? 'flex' : 'none'; fab.textContent = count; }
+  }
 }
 
 function updateStats() {
   const counts = { idea: 0, draft: 0, ready: 0, published: 0, deleted: 0 };
   posts.forEach(p => { if (counts[p.status] !== undefined) counts[p.status]++; });
 
-  document.getElementById('stat-total').textContent = posts.filter(p => p.status !== 'deleted').length;
+  document.getElementById('stat-total').textContent = posts.filter(p => p.status !== 'deleted' && p.status !== 'published').length;
   document.getElementById('stat-ready').textContent = counts.ready;
   document.getElementById('stat-draft').textContent = counts.draft;
   document.getElementById('stat-idea').textContent = counts.idea;
@@ -1841,7 +2045,7 @@ function updateStats() {
   const now = Date.now();
   posts = posts.filter(p => !(p.status === 'deleted' && p.deletedAt && (now - Number(p.deletedAt)) > 172800000));
 
-  document.getElementById('count-all').textContent = posts.filter(p => p.status !== 'deleted').length;
+  document.getElementById('count-all').textContent = posts.filter(p => p.status !== 'deleted' && p.status !== 'published').length;
   document.getElementById('count-idea').textContent = counts.idea;
   document.getElementById('count-draft').textContent = counts.draft;
   document.getElementById('count-ready').textContent = counts.ready;
@@ -1874,7 +2078,19 @@ function renderPosts() {
     return matchStatus && matchTag && matchSearch;
   });
 
-  filtered.sort((a, b) => b.created - a.created);
+  const sortVal = window.currentSort || 'created_desc';
+  const statusOrder = { idea: 0, draft: 1, ready: 2, published: 3, deleted: 4 };
+  filtered.sort((a, b) => {
+    switch(sortVal) {
+      case 'created_asc':  return a.created - b.created;
+      case 'updated_desc': return (b.updated || b.created) - (a.updated || a.created);
+      case 'status':       return (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5);
+      case 'length_desc':  return (b.body || '').length - (a.body || '').length;
+      case 'length_asc':   return (a.body || '').length - (b.body || '').length;
+      case 'tag':          return (a.tags?.[0] || 'ת').localeCompare(b.tags?.[0] || 'ת', 'he');
+      default:             return b.created - a.created; // created_desc
+    }
+  });
 
   const container = document.getElementById('posts-container');
   container.className = currentView === 'grid' ? 'posts-grid' : 'posts-list';
@@ -1998,24 +2214,22 @@ async function savePost() {
 
   if (!title && !body) { showToast('⚠️ הוסף לפחות כותרת או תוכן'); return; }
 
-  setSyncing(true);
   let postData;
   if (editingId) {
     const idx = posts.findIndex(p => p.id === editingId);
-    postData = { ...posts[idx], title, body, visual, status, date, tags: currentTags };
+    postData = { ...posts[idx], title, body, visual, status, date, tags: currentTags, updated: Date.now() };
     if (idx !== -1) posts[idx] = postData;
-    await savePosts(postData, 'savePost');
     showToast('✅ הפוסט עודכן!');
   } else {
     postData = { id: Date.now(), title, body, visual, status, date, tags: currentTags, created: Date.now() };
     posts.unshift(postData);
-    await savePosts(postData, 'savePost');
     showToast('🎉 פוסט נוסף!');
   }
 
-  setSyncing(false);
   closeModal();
   render();
+  // Save to Sheets in background
+  savePosts(postData, 'savePost');
 }
 
 async function deletePost(id) {
@@ -2182,6 +2396,21 @@ if (!checkAuth()) {
   <h4>📱 כניסות אחרונות</h4>
   <div id="devices-list"></div>
 </div>
+
+
+<!-- Mobile Tags Drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeTagsDrawer()"></div>
+
+<div class="mobile-tags-drawer" id="tags-drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-title">🏷️ סינון לפי תגית</div>
+  <div class="drawer-tags-grid" id="drawer-tags-list"></div>
+</div>
+
+<button class="mobile-tags-fab" id="tags-fab" onclick="openTagsDrawer()">
+  🏷️
+  <span class="fab-count" id="fab-count" style="display:none">0</span>
+</button>
 
 </body>
 </html>
