@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מנהל פוסטים | אסף יביטון</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #17171e;
+    --surface2: #1e1e28;
+    --surface3: #25252f;
+    --border: #2e2e3e;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --text: #e8e8f0;
+    --text2: #9090a8;
+    --text3: #5a5a72;
+    --ready: #43e97b;
+    --draft: #f7c948;
+    --idea: #6c63ff;
+    --published: #4fc3f7;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    direction: rtl;
+  }
+
+  /* Sidebar */
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .sidebar-logo {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo h1 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .sidebar-logo span {
+    font-size: 12px;
+    color: var(--text3);
+    font-weight: 400;
+    display: block;
+    margin-top: 2px;
+  }
+
+  .sidebar-section {
+    padding: 20px 16px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text3);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .sidebar-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    margin: 2px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text2);
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    width: calc(100% - 16px);
+    text-align: right;
+  }
+
+  .sidebar-btn:hover { background: var(--surface2); color: var(--text); }
+  .sidebar-btn.active { background: var(--accent); color: #fff; }
+
+  .sidebar-btn .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .count-badge {
+    margin-right: auto;
+    background: var(--surface3);
+    color: var(--text3);
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  .sidebar-btn.active .count-badge {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+  }
+
+  .tag-list { padding: 4px 8px; }
+
+  .tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    margin: 3px 4px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    color: var(--text2);
+    background: none;
+    transition: all 0.15s;
+  }
+
+  .tag-chip:hover, .tag-chip.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(108,99,255,0.08);
+  }
+
+  .new-post-btn {
+    margin: 16px;
+    padding: 12px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Heebo', sans-serif;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .new-post-btn:hover { background: #5b52ee; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(108,99,255,0.4); }
+
+  /* Main */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .topbar h2 { font-size: 20px; font-weight: 800; flex: 1; }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    width: 260px;
+  }
+
+  .search-box input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Heebo', sans-serif;
+    width: 100%;
+    direction: rtl;
+  }
+
+  .search-box input::placeholder { color: var(--text3); }
+
+  .view-toggle { display: flex; gap: 4px; }
+
+  .view-btn {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 16px;
+  }
+
+  .view-btn.active { background: var(--surface2); color: var(--text); border-color: var(--accent); }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-item {
+    flex: 1;
+    padding: 16px 20px;
+    background: var(--surface);
+    text-align: center;
+  }
+
+  .stat-item .num {
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .stat-item .label {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  /* Posts area */
+  .posts-area {
+    flex: 1;
+    padding: 24px 28px;
+    overflow-y: auto;
+  }
+
+  /* Grid view */
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  /* List view */
+  .posts-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .post-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .post-card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 3px;
+    height: 100%;
+    border-radius: 0 14px 14px 0;
+  }
+
+  .post-card.status-ready::before { background: var(--ready); }
+  .post-card.status-draft::before { background: var(--draft); }
+  .post-card.status-idea::before { background: var(--idea); }
+  .post-card.status-published::before { background: var(--published); }
+
+  .post-card:hover {
+    border-color: var(--accent);
+    background: var(--surface2);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+
+  .post-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  .post-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .badge-ready { background: rgba(67,233,123,0.12); color: var(--ready); }
+  .badge-draft { background: rgba(247,201,72,0.12); color: var(--draft); }
+  .badge-idea { background: rgba(108,99,255,0.12); color: var(--idea); }
+  .badge-published { background: rgba(79,195,247,0.12); color: var(--published); }
+
+  .post-body {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .post-visual {
+    font-size: 12px;
+    color: var(--text3);
+    background: var(--surface2);
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .post-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .post-tags { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; }
+
+  .post-tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--surface3);
+    color: var(--text3);
+    font-weight: 500;
+  }
+
+  .post-date { font-size: 11px; color: var(--text3); flex-shrink: 0; }
+
+  .post-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .post-card:hover .post-actions { opacity: 1; }
+
+  .action-btn {
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface3);
+    color: var(--text2);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Heebo', sans-serif;
+  }
+
+  .action-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .action-btn.danger:hover { background: var(--accent2); border-color: var(--accent2); }
+
+  /* List view card */
+  .post-card-list {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+  }
+
+  .post-card-list .post-title { font-size: 14px; }
+  .post-card-list .post-body {
+    -webkit-line-clamp: 1;
+    margin-bottom: 0;
+    font-size: 12px;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 32px;
+    transform: translateY(20px);
+    transition: transform 0.2s;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  }
+
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .modal-title { font-size: 20px; font-weight: 800; }
+
+  .modal-close {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text2);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .modal-close:hover { background: var(--surface2); color: var(--text); }
+
+  .form-row { margin-bottom: 20px; }
+
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text3);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .form-input, .form-textarea, .form-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Heebo', sans-serif;
+    outline: none;
+    transition: border-color 0.15s;
+    direction: rtl;
+  }
+
+  .form-input:focus, .form-textarea:focus, .form-select:focus {
+    border-color: var(--accent);
+  }
+
+  .form-textarea {
+    min-height: 140px;
+    resize: vertical;
+    line-height: 1.7;
+  }
+
+  .form-select option { background: var(--surface2); }
+
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .tags-input-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    min-height: 48px;
+    align-items: center;
+    cursor: text;
+  }
+
+  .tags-input-area:focus-within { border-color: var(--accent); }
+
+  .tag-input-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface3);
+    color: var(--text);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .tag-input-chip button {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .tag-input-chip button:hover { color: var(--accent2); }
+
+  .tags-input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'Heebo', sans-serif;
+    min-width: 100px;
+    flex: 1;
+    direction: rtl;
+  }
+
+  .modal-footer {
+    display: flex;
+    gap: 10px;
+    margin-top: 28px;
+    justify-content: flex-end;
+  }
+
+  .btn-primary {
+    padding: 12px 24px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Heebo', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .btn-primary:hover { background: #5b52ee; }
+
+  .btn-secondary {
+    padding: 12px 24px;
+    background: none;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Heebo', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .btn-secondary:hover { background: var(--surface2); color: var(--text); }
+
+  .btn-copy {
+    padding: 12px 24px;
+    background: rgba(67,233,123,0.1);
+    color: var(--ready);
+    border: 1px solid rgba(67,233,123,0.2);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Heebo', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .btn-copy:hover { background: rgba(67,233,123,0.2); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text3);
+  }
+
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 { font-size: 18px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 200;
+    transition: transform 0.3s;
+    box-shadow: var(--shadow);
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border); }
+
+  .char-counter {
+    text-align: left;
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  .char-counter.warn { color: var(--draft); }
+  .char-counter.over { color: var(--accent2); }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <h1>📋 פוסט מנג׳ר</h1>
+      <span>LinkedIn · אסף יעיש ביטון</span>
+    </div>
+
+    <button class="new-post-btn" onclick="openModal()">
+      ＋ פוסט חדש
+    </button>
+
+    <div class="sidebar-section">סטטוס</div>
+
+    <button class="sidebar-btn active" onclick="filterStatus('all', this)">
+      <span>📁</span> הכל
+      <span class="count-badge" id="count-all">0</span>
+    </button>
+    <button class="sidebar-btn" onclick="filterStatus('idea', this)">
+      <span class="dot" style="background:var(--idea)"></span> רעיון
+      <span class="count-badge" id="count-idea">0</span>
+    </button>
+    <button class="sidebar-btn" onclick="filterStatus('draft', this)">
+      <span class="dot" style="background:var(--draft)"></span> דראפט
+      <span class="count-badge" id="count-draft">0</span>
+    </button>
+    <button class="sidebar-btn" onclick="filterStatus('ready', this)">
+      <span class="dot" style="background:var(--ready)"></span> מוכן לפרסום
+      <span class="count-badge" id="count-ready">0</span>
+    </button>
+    <button class="sidebar-btn" onclick="filterStatus('published', this)">
+      <span class="dot" style="background:var(--published)"></span> פורסם
+      <span class="count-badge" id="count-published">0</span>
+    </button>
+
+    <div class="sidebar-section">תגיות</div>
+    <div class="tag-list" id="sidebar-tags"></div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <h2 id="section-title">כל הפוסטים</h2>
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" placeholder="חיפוש..." oninput="searchPosts(this.value)" />
+      </div>
+      <span id="sync-indicator" style="font-size:12px;color:var(--text3);">⏳ טוען...</span>
+      <div class="view-toggle">
+        <button class="view-btn active" onclick="setView('grid', this)" title="גריד">⊞</button>
+        <button class="view-btn" onclick="setView('list', this)" title="רשימה">☰</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="num" id="stat-total" style="color:var(--text)">0</div>
+        <div class="label">סה״כ פוסטים</div>
+      </div>
+      <div class="stat-item">
+        <div class="num" id="stat-ready" style="color:var(--ready)">0</div>
+        <div class="label">מוכנים לפרסום</div>
+      </div>
+      <div class="stat-item">
+        <div class="num" id="stat-draft" style="color:var(--draft)">0</div>
+        <div class="label">דראפטים</div>
+      </div>
+      <div class="stat-item">
+        <div class="num" id="stat-idea" style="color:var(--idea)">0</div>
+        <div class="label">רעיונות</div>
+      </div>
+      <div class="stat-item">
+        <div class="num" id="stat-published" style="color:var(--published)">0</div>
+        <div class="label">פורסמו</div>
+      </div>
+    </div>
+
+    <div class="posts-area">
+      <div id="posts-container" class="posts-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">פוסט חדש</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">נושא / כותרת</label>
+      <input type="text" class="form-input" id="field-title" placeholder="מה הנושא המרכזי של הפוסט?" />
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">גוף הפוסט</label>
+      <textarea class="form-textarea" id="field-body" placeholder="כתוב את הפוסט כאן..." oninput="updateCharCount(this)"></textarea>
+      <div class="char-counter" id="char-counter">0 / 3000 תווים</div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">הצעה לויז׳ואל</label>
+      <input type="text" class="form-input" id="field-visual" placeholder="תאר את התמונה / גרפיקה המוצעת..." />
+    </div>
+
+    <div class="form-row-2">
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">סטטוס</label>
+        <select class="form-select" id="field-status">
+          <option value="idea">💡 רעיון</option>
+          <option value="draft">✏️ דראפט</option>
+          <option value="ready">✅ מוכן לפרסום</option>
+          <option value="published">🚀 פורסם</option>
+        </select>
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">תאריך מתוכנן</label>
+        <input type="date" class="form-input" id="field-date" />
+      </div>
+    </div>
+
+    <div class="form-row" style="margin-top:16px">
+      <label class="form-label">תגיות</label>
+      <div class="tags-input-area" id="tags-input-area" onclick="document.getElementById('tag-input').focus()">
+        <input type="text" class="tags-input" id="tag-input" placeholder="הוסף תגית ולחץ Enter..." onkeydown="handleTagInput(event)" />
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">ביטול</button>
+      <button class="btn-copy" id="copy-btn" onclick="copyPostText()" style="display:none">📋 העתק טקסט</button>
+      <button class="btn-primary" onclick="savePost()">שמור פוסט</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ========== STATE ==========
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbw-5d3Ow66B1XDpl_0guj9eOhL661rDVrLt5d-4TVQqOOeHnSwiGgrhfGiRO_yH_LR66w/exec';
+let posts = [];
+let currentFilter = 'all';
+let currentView = 'grid';
+let currentSearch = '';
+let editingId = null;
+let currentTags = [];
+let filterTag = null;
+let isSyncing = false;
+
+const statusLabels = {
+  idea: 'רעיון',
+  draft: 'דראפט',
+  ready: 'מוכן לפרסום',
+  published: 'פורסם'
+};
+
+const statusEmoji = {
+  idea: '💡',
+  draft: '✏️',
+  ready: '✅',
+  published: '🚀'
+};
+
+// ========== SYNC ==========
+function setSyncing(val, msg) {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  if (val) { el.textContent = '🔄 מסנכרן...'; el.style.color = 'var(--draft)'; }
+  else { el.textContent = msg || '✅ מסונכרן'; el.style.color = 'var(--ready)'; }
+}
+
+// ========== INIT ==========
+async function init() {
+  setSyncing(true);
+  try {
+    const res = await fetch(SHEET_URL + '?action=getPosts');
+    const data = await res.json();
+    posts = (data.posts || []).map(p => ({
+      ...p, id: Number(p.id), created: Number(p.created),
+      tags: Array.isArray(p.tags) ? p.tags : []
+    }));
+    setSyncing(false);
+  } catch(e) {
+    setSyncing(false, '⚠️ שגיאת חיבור');
+    showToast('⚠️ לא ניתן להתחבר ל-Google Sheets');
+    posts = [];
+  }
+  render();
+}
+
+// ========== RENDER ==========
+function render() {
+  updateStats();
+  updateSidebarTags();
+  renderPosts();
+}
+
+function updateStats() {
+  const counts = { idea: 0, draft: 0, ready: 0, published: 0 };
+  posts.forEach(p => counts[p.status]++);
+
+  document.getElementById('stat-total').textContent = posts.length;
+  document.getElementById('stat-ready').textContent = counts.ready;
+  document.getElementById('stat-draft').textContent = counts.draft;
+  document.getElementById('stat-idea').textContent = counts.idea;
+  document.getElementById('stat-published').textContent = counts.published;
+
+  document.getElementById('count-all').textContent = posts.length;
+  document.getElementById('count-idea').textContent = counts.idea;
+  document.getElementById('count-draft').textContent = counts.draft;
+  document.getElementById('count-ready').textContent = counts.ready;
+  document.getElementById('count-published').textContent = counts.published;
+}
+
+function updateSidebarTags() {
+  const allTags = new Set();
+  posts.forEach(p => p.tags.forEach(t => allTags.add(t)));
+  const container = document.getElementById('sidebar-tags');
+  container.innerHTML = '';
+  allTags.forEach(tag => {
+    const chip = document.createElement('button');
+    chip.className = 'tag-chip' + (filterTag === tag ? ' active' : '');
+    chip.textContent = tag;
+    chip.onclick = () => toggleTagFilter(tag);
+    container.appendChild(chip);
+  });
+}
+
+function renderPosts() {
+  let filtered = posts.filter(p => {
+    const matchStatus = currentFilter === 'all' || p.status === currentFilter;
+    const matchTag = !filterTag || p.tags.includes(filterTag);
+    const matchSearch = !currentSearch ||
+      p.title.includes(currentSearch) ||
+      p.body.includes(currentSearch) ||
+      p.tags.some(t => t.includes(currentSearch));
+    return matchStatus && matchTag && matchSearch;
+  });
+
+  filtered.sort((a, b) => b.created - a.created);
+
+  const container = document.getElementById('posts-container');
+  container.className = currentView === 'grid' ? 'posts-grid' : 'posts-list';
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="icon">📭</div>
+        <h3>אין פוסטים כאן עדיין</h3>
+        <p>לחץ על "פוסט חדש" כדי להתחיל</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(post => renderCard(post)).join('');
+}
+
+function renderCard(post) {
+  const badge = `<span class="status-badge badge-${post.status}">${statusEmoji[post.status]} ${statusLabels[post.status]}</span>`;
+  const tags = post.tags.map(t => `<span class="post-tag">${t}</span>`).join('');
+  const dateStr = post.date ? `📅 ${post.date}` : '';
+  const visualHtml = post.visual ? `<div class="post-visual">🎨 ${post.visual}</div>` : '';
+
+  if (currentView === 'list') {
+    return `
+    <div class="post-card post-card-list status-${post.status}" onclick="editPost(${post.id})">
+      <div style="flex:1;min-width:0">
+        <div class="post-title">${post.title || 'ללא כותרת'}</div>
+        <div class="post-body">${post.body}</div>
+      </div>
+      ${badge}
+      <div class="post-date">${dateStr}</div>
+      <div class="post-actions">
+        <button class="action-btn" onclick="event.stopPropagation();copyText(${post.id})">העתק</button>
+        <button class="action-btn danger" onclick="event.stopPropagation();deletePost(${post.id})">🗑</button>
+      </div>
+    </div>`;
+  }
+
+  return `
+  <div class="post-card status-${post.status}" onclick="editPost(${post.id})">
+    <div class="post-card-header">
+      <div class="post-title">${post.title || 'ללא כותרת'}</div>
+      ${badge}
+    </div>
+    <div class="post-body">${post.body || 'אין תוכן עדיין...'}</div>
+    ${visualHtml}
+    <div class="post-footer">
+      <div class="post-tags">${tags}</div>
+      <div class="post-date">${dateStr}</div>
+      <div class="post-actions">
+        <button class="action-btn" onclick="event.stopPropagation();copyText(${post.id})">העתק</button>
+        <button class="action-btn danger" onclick="event.stopPropagation();deletePost(${post.id})">🗑</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ========== MODAL ==========
+function openModal(post = null) {
+  editingId = post ? post.id : null;
+  currentTags = post ? [...post.tags] : [];
+
+  document.getElementById('modal-title').textContent = post ? 'עריכת פוסט' : 'פוסט חדש';
+  document.getElementById('field-title').value = post ? post.title : '';
+  document.getElementById('field-body').value = post ? post.body : '';
+  document.getElementById('field-visual').value = post ? post.visual : '';
+  document.getElementById('field-status').value = post ? post.status : 'idea';
+  document.getElementById('field-date').value = post ? post.date : '';
+  document.getElementById('copy-btn').style.display = post ? 'block' : 'none';
+
+  renderTagChips();
+  updateCharCount(document.getElementById('field-body'));
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  editingId = null;
+  currentTags = [];
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+function editPost(id) {
+  const post = posts.find(p => p.id === id);
+  if (post) openModal(post);
+}
+
+async function savePost() {
+  const title = document.getElementById('field-title').value.trim();
+  const body = document.getElementById('field-body').value.trim();
+  const visual = document.getElementById('field-visual').value.trim();
+  const status = document.getElementById('field-status').value;
+  const date = document.getElementById('field-date').value;
+
+  if (!title && !body) { showToast('⚠️ הוסף לפחות כותרת או תוכן'); return; }
+
+  setSyncing(true);
+  let postData;
+  if (editingId) {
+    const idx = posts.findIndex(p => p.id === editingId);
+    postData = { ...posts[idx], title, body, visual, status, date, tags: currentTags };
+    if (idx !== -1) posts[idx] = postData;
+    await savePosts(postData, 'savePost');
+    showToast('✅ הפוסט עודכן!');
+  } else {
+    postData = { id: Date.now(), title, body, visual, status, date, tags: currentTags, created: Date.now() };
+    posts.unshift(postData);
+    await savePosts(postData, 'savePost');
+    showToast('🎉 פוסט נוסף!');
+  }
+
+  setSyncing(false);
+  closeModal();
+  render();
+}
+
+async function deletePost(id) {
+  if (!confirm('למחוק את הפוסט?')) return;
+  posts = posts.filter(p => p.id !== id);
+  setSyncing(true);
+  await savePosts({ id }, 'deletePost');
+  setSyncing(false);
+  render();
+  showToast('🗑 הפוסט נמחק');
+}
+
+// ========== TAGS ==========
+function handleTagInput(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = e.target.value.trim().replace(',', '');
+    if (val && !currentTags.includes(val)) {
+      currentTags.push(val);
+      renderTagChips();
+    }
+    e.target.value = '';
+  }
+}
+
+function renderTagChips() {
+  const area = document.getElementById('tags-input-area');
+  const input = document.getElementById('tag-input');
+  area.innerHTML = '';
+  currentTags.forEach((tag, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'tag-input-chip';
+    chip.innerHTML = `${tag}<button onclick="removeTag(${i})">×</button>`;
+    area.appendChild(chip);
+  });
+  area.appendChild(input);
+}
+
+function removeTag(i) {
+  currentTags.splice(i, 1);
+  renderTagChips();
+}
+
+// ========== FILTERS ==========
+function filterStatus(status, btn) {
+  currentFilter = status;
+  filterTag = null;
+  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
+  const titles = { all: 'כל הפוסטים', idea: 'רעיונות', draft: 'דראפטים', ready: 'מוכנים לפרסום', published: 'פורסמו' };
+  document.getElementById('section-title').textContent = titles[status];
+  renderPosts();
+  updateSidebarTags();
+}
+
+function toggleTagFilter(tag) {
+  filterTag = filterTag === tag ? null : tag;
+  updateSidebarTags();
+  renderPosts();
+}
+
+function searchPosts(val) {
+  currentSearch = val;
+  renderPosts();
+}
+
+function setView(view, btn) {
+  currentView = view;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPosts();
+}
+
+// ========== UTILS ==========
+function copyText(id) {
+  const post = posts.find(p => p.id === id);
+  if (!post) return;
+  navigator.clipboard.writeText(post.body || '').then(() => showToast('📋 הטקסט הועתק!'));
+}
+
+function copyPostText() {
+  const body = document.getElementById('field-body').value;
+  navigator.clipboard.writeText(body).then(() => showToast('📋 הועתק ללוח!'));
+}
+
+function updateCharCount(el) {
+  const len = el.value.length;
+  const counter = document.getElementById('char-counter');
+  counter.textContent = `${len} / 3000 תווים`;
+  counter.className = 'char-counter' + (len > 3000 ? ' over' : len > 2500 ? ' warn' : '');
+}
+
+async function savePosts(post, action) {
+  try {
+    await fetch(SHEET_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action, ...post })
+    });
+  } catch(e) {
+    showToast('⚠️ שגיאה בשמירה');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ========== START ==========
+init();
+</script>
+</body>
+</html>
