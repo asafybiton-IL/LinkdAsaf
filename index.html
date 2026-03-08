@@ -375,7 +375,7 @@ function checkLogin() {
   const val = document.getElementById('login-input').value;
   const input = document.getElementById('login-input');
   const err = document.getElementById('login-error');
-  if (val === 'Yaishps90') {
+  if (val === '0868901990') {
     localStorage.setItem('ayb_auth', 'ayb_authenticated_2024');
     document.getElementById('login-overlay').style.display = 'none';
     err.textContent = '';
@@ -567,7 +567,60 @@ function renderPosts() {
     container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">📭</div><h3>אין פוסטים כאן עדיין</h3><p>לחץ על "פוסט חדש" כדי להתחיל</p></div>`;
     return;
   }
-  container.innerHTML = filtered.map(post => renderCard(post)).join('');
+  container.innerHTML = '';
+  filtered.forEach(post => {
+    const div = document.createElement('div');
+    div.innerHTML = renderCard(post);
+    const card = div.firstElementChild;
+    if (isDesktop()) {
+      card.setAttribute('draggable', 'true');
+      card.dataset.postId = post.id;
+      card.addEventListener('dragstart', onCardDragStart);
+      card.addEventListener('dragover', onCardDragOver);
+      card.addEventListener('dragleave', onCardDragLeave);
+      card.addEventListener('drop', onCardDrop);
+      card.addEventListener('dragend', onCardDragEnd);
+    }
+    container.appendChild(card);
+  });
+}
+
+// ========== CARD DRAG & DROP ==========
+let dragSrcId = null;
+
+function onCardDragStart(e) {
+  dragSrcId = parseInt(this.dataset.postId);
+  this.style.opacity = '0.4';
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onCardDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  this.style.borderColor = 'var(--accent)';
+  this.style.background = 'var(--surface2)';
+}
+function onCardDragLeave() {
+  this.style.borderColor = '';
+  this.style.background = '';
+}
+function onCardDrop(e) {
+  e.stopPropagation();
+  const targetId = parseInt(this.dataset.postId);
+  if (dragSrcId === targetId) return;
+  const srcIdx = posts.findIndex(p => p.id === dragSrcId);
+  const tgtIdx = posts.findIndex(p => p.id === targetId);
+  if (srcIdx === -1 || tgtIdx === -1) return;
+  const [moved] = posts.splice(srcIdx, 1);
+  posts.splice(tgtIdx, 0, moved);
+  this.style.borderColor = '';
+  this.style.background = '';
+  renderPosts();
+  showToast('✅ סדר עודכן');
+}
+function onCardDragEnd() {
+  this.style.opacity = '';
+  this.style.borderColor = '';
+  this.style.background = '';
 }
 
 function renderCard(post) {
