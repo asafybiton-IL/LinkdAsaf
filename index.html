@@ -189,43 +189,70 @@
 
   /* MOBILE */
   @media (max-width:768px) {
-    .windows-container, .windows-taskbar { display:none; }
-    .sidebar { width:100%; min-width:unset; height:auto; position:relative; border-left:none; border-bottom:1px solid var(--border); }
-    .sidebar-logo { padding:16px 16px 12px; }
-    .sidebar-logo h1 { font-size:16px; }
-    .new-post-btn { margin:10px 12px; padding:10px; }
-    .sidebar-section, .sidebar-btn:not(.active), .tag-list { display:none; }
-    .sidebar-filters { display:flex; overflow-x:auto; gap:6px; padding:8px 12px; scrollbar-width:none; }
-    .sidebar-filters::-webkit-scrollbar { display:none; }
-    .sidebar-btn { display:inline-flex !important; white-space:nowrap; flex-shrink:0; width:auto !important; margin:0; padding:7px 14px; font-size:13px; }
-    .topbar { padding:12px 16px; flex-wrap:wrap; gap:10px; }
-    .topbar h2 { font-size:16px; width:100%; }
-    .search-box { width:100%; flex:1; }
-    .stats-bar { overflow-x:auto; }
-    .stat-item { min-width:80px; padding:12px 10px; }
-    .stat-item .num { font-size:20px; }
-    .posts-area { padding:16px; padding-bottom:80px; }
-    .posts-grid { grid-template-columns:1fr; }
-    .modal-overlay { align-items:flex-end; padding:0; }
-    .modal { border-radius:20px 20px 0 0; max-height:92vh; padding:20px 16px 0; display:flex; flex-direction:column; }
-    .modal-header { flex-shrink:0; margin-bottom:16px; }
-    .modal-body-scroll { flex:1; overflow-y:auto; padding-bottom:80px; -webkit-overflow-scrolling:touch; }
-    #field-body { min-height:200px; font-size:16px !important; line-height:1.8; }
-    .form-input, .form-select { font-size:16px !important; padding:14px 16px; }
-    .modal-footer { position:sticky; bottom:0; background:var(--surface); padding:12px 0 20px; margin-top:0; border-top:1px solid var(--border); flex-shrink:0; gap:8px; }
-    .modal-footer button { flex:1; padding:14px; font-size:15px; }
+    /* Hide desktop-only */
+    .windows-container, .windows-taskbar, .sidebar-section, .tag-list,
+    .sort-select, .view-toggle, .devices-badge, .sync-indicator { display:none !important; }
 
-    /* MOBILE TAGS DRAWER */
-    .mobile-tags-fab { position:fixed; bottom:20px; left:20px; width:48px; height:48px; border-radius:50%; background:var(--surface); border:1px solid var(--border); color:var(--text2); font-size:20px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(0,0,0,0.4); cursor:pointer; z-index:80; transition:all 0.2s; }
-    .mobile-tags-fab:hover { border-color:var(--accent); color:var(--accent); }
+    /* Layout */
+    .layout { flex-direction:column; }
+    .main { flex:1; min-height:0; }
+
+    /* Sidebar → top bar */
+    .sidebar { width:100%; min-width:unset; height:auto; position:relative; border-left:none; border-bottom:1px solid var(--border); flex-direction:column; }
+    .sidebar-logo { padding:14px 16px 10px; display:flex; align-items:center; justify-content:space-between; border-bottom:none; }
+    .sidebar-logo h1 { font-size:17px; }
+    .sidebar-logo span { display:none; }
+
+    /* New post button */
+    .new-post-btn { margin:0 12px 10px; padding:11px 16px; font-size:14px; border-radius:10px; }
+
+    /* Filter pills */
+    .sidebar-filters { display:flex !important; overflow-x:auto; gap:6px; padding:6px 12px 10px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+    .sidebar-filters::-webkit-scrollbar { display:none; }
+    .sidebar-btn { display:inline-flex !important; white-space:nowrap; flex-shrink:0; width:auto !important; margin:0 !important; padding:7px 12px; font-size:12px; border-radius:20px; }
+    .sidebar-btn .dot { width:7px; height:7px; }
+    .count-badge { font-size:10px; padding:1px 5px; }
+
+    /* Topbar */
+    .topbar { padding:10px 12px; gap:8px; border-bottom:1px solid var(--border); }
+    .topbar h2 { display:none; }
+    .search-box { flex:1; padding:7px 12px; }
+    .search-box input { font-size:14px; }
+
+    /* Stats */
+    .stats-bar { overflow-x:auto; scrollbar-width:none; }
+    .stats-bar::-webkit-scrollbar { display:none; }
+    .stat-item { min-width:75px; padding:10px 8px; }
+    .stat-item .num { font-size:20px; }
+    .stat-item .label { font-size:10px; }
+
+    /* Posts */
+    .posts-area { padding:12px; padding-bottom:80px; }
+    .posts-grid { grid-template-columns:1fr; gap:10px; }
+    .post-card { padding:16px; }
+    .post-actions { opacity:1 !important; }
+
+    /* Modal as bottom sheet */
+    .modal-overlay { align-items:flex-end; padding:0; }
+    .modal { border-radius:20px 20px 0 0; max-height:93vh; padding:20px 16px 0; display:flex; flex-direction:column; }
+    .modal-header { flex-shrink:0; margin-bottom:14px; }
+    .modal-body-scroll { flex:1; overflow-y:auto; padding-bottom:100px; -webkit-overflow-scrolling:touch; }
+    #field-body { min-height:200px; font-size:16px !important; line-height:1.8; }
+    .form-input, .form-select, .form-textarea { font-size:16px !important; }
+    .form-input, .form-select { padding:13px 14px; }
+    .modal-footer { position:sticky; bottom:0; background:var(--surface); padding:10px 0 24px; margin-top:0; border-top:1px solid var(--border); flex-shrink:0; gap:8px; z-index:10; }
+    .modal-footer button { flex:1; padding:13px; font-size:14px; }
+    .autosave-indicator { display:none; }
+
+    /* Tags drawer */
+    .mobile-tags-fab { position:fixed; bottom:20px; left:16px; width:46px; height:46px; border-radius:50%; background:var(--surface2); border:1px solid var(--border); color:var(--text2); font-size:18px; display:flex !important; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(0,0,0,0.4); cursor:pointer; z-index:80; }
     .fab-count { position:absolute; top:-4px; right:-4px; background:var(--accent); color:#fff; font-size:10px; font-weight:700; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
     .mobile-tags-drawer { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); border-radius:20px 20px 0 0; padding:16px 16px 32px; z-index:200; transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.4,0,0.2,1); max-height:60vh; overflow-y:auto; }
     .mobile-tags-drawer.open { transform:translateY(0); }
-    .drawer-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 16px; }
-    .drawer-title { font-size:15px; font-weight:700; margin-bottom:14px; }
+    .drawer-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 14px; }
+    .drawer-title { font-size:15px; font-weight:700; margin-bottom:12px; }
     .drawer-tags-grid { display:flex; flex-wrap:wrap; gap:8px; }
-    .drawer-tag-btn { padding:8px 16px; border-radius:20px; background:var(--surface2); border:1px solid var(--border); color:var(--text2); font-size:13px; font-weight:600; font-family:'Heebo',sans-serif; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; gap:6px; }
-    .drawer-tag-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .drawer-tag-btn { padding:8px 14px; border-radius:20px; background:var(--surface2); border:1px solid var(--border); color:var(--text2); font-size:13px; font-weight:600; font-family:'Heebo',sans-serif; cursor:pointer; transition:all 0.15s; }
     .drawer-tag-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
     .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:199; display:none; }
     .drawer-overlay.open { display:block; }
@@ -640,7 +667,7 @@ function renderCard(post) {
   const tags = (post.tags||[]).map(t => `<span class="post-tag">${t}</span>`).join('');
   const dateStr = post.date ? `📅 ${post.date}` : '';
   const visualHtml = post.visual ? `<div class="post-visual">🎨 ${post.visual}</div>` : '';
-  let actions = `<button class="action-btn" onclick="event.stopPropagation();copyText(${post.id})">📋</button>`;
+  let actions = `<button class="action-btn" onclick="event.stopPropagation();copyText(${post.id})">📋</button><button class="action-btn" onclick="event.stopPropagation();duplicatePost(${post.id},null)" title="שכפל">⧉</button>`;
   if (post.status === 'deleted') {
     const hoursLeft = post.deletedAt ? Math.max(0, Math.ceil((48*3600*1000 - (Date.now() - post.deletedAt)) / 3600000)) : 48;
     actions = `<span class="trash-timer">${hoursLeft}ש׳</span><button class="restore-btn" onclick="event.stopPropagation();restorePost(${post.id})">♻️ שחזר</button>`;
@@ -853,10 +880,17 @@ function openWindow(post = null, contextStatus = null, contextTag = null) {
         </select></div>
         <div class="form-row" style="margin-bottom:0"><label class="form-label">תאריך</label><input type="date" class="form-input" id="wf_date_${winId}" value="${post?(post.date||''):''}" onchange="markWindowChanged('${winId}')" /></div>
       </div>
+      <div class="form-row" style="margin-top:12px">
+        <label class="form-label">תגיות</label>
+        <div class="tags-input-area window-tags-area" id="wf_tags_area_${winId}" onclick="document.getElementById('wf_tag_input_${winId}').focus()">
+          <input type="text" class="tags-input" id="wf_tag_input_${winId}" placeholder="הוסף תגית + Enter..." onkeydown="handleWindowTagInput(event,'${winId}')" />
+        </div>
+      </div>
     </div>
     <div class="post-window-footer">
       <span class="autosave-indicator" id="wasave_${winId}"></span>
-      <button class="btn-copy" onclick="copyWindowText('${winId}')">📋 העתק</button>
+      <button class="btn-copy" onclick="copyWindowText('${winId}')" title="העתק טקסט">📋</button>
+      <button class="btn-copy" onclick="duplicatePost(${post?post.id:'null'}, '${winId}')" title="שכפל פוסט" style="background:rgba(108,99,255,0.1);color:var(--accent);border-color:rgba(108,99,255,0.3)">⧉ שכפל</button>
       <button class="btn-primary" style="flex:1" onclick="saveWindow('${winId}',${post?post.id:'null'},${post?post.created:'null'})">שמור</button>
     </div>`;
   document.getElementById('windows-container').appendChild(win);
@@ -871,15 +905,9 @@ function openWindow(post = null, contextStatus = null, contextTag = null) {
   }
   setTimeout(() => updateCharCountWindow(winId), 50);
   startWindowAutosave(winId, post ? post.id : null, post ? post.created : null);
-  windows[winId] = { id: post ? post.id : null, created: post ? post.created : null, changed: false, autosaveTimer: null, tags: initTags };
-  // Render initial tags in window
-  if (initTags.length > 0) {
-    const tagArea = win.querySelector('.window-tags-area');
-    if (tagArea) {
-      windows[winId].tagsList = [...initTags];
-      renderWindowTags(winId);
-    }
-  }
+  windows[winId] = { id: post ? post.id : null, created: post ? post.created : null, changed: false, autosaveTimer: null, tagsList: [...initTags] };
+  // Render initial tags
+  setTimeout(() => renderWindowTags(winId), 50);
 }
 
 function activateWindow(winId) {
@@ -929,7 +957,8 @@ function saveWindow(winId, existingId, existingCreated) {
   if (!title && !body) { showToast('⚠️ הוסף כותרת או תוכן'); return; }
   const postId = existingId || windows[winId]?.id || Date.now();
   const created = existingCreated || windows[winId]?.created || Date.now();
-  const postData = { id:postId, created, title, body, visual, status, tags:[], date, updated:Date.now() };
+  const tags = windows[winId]?.tagsList || [];
+  const postData = { id:postId, created, title, body, visual, status, tags, date, updated:Date.now() };
   const idx = posts.findIndex(p => p.id === postId);
   if (idx !== -1) posts[idx] = postData; else posts.unshift(postData);
   if (windows[winId]) { windows[winId].id = postId; windows[winId].created = created; windows[winId].changed = false; }
@@ -1021,6 +1050,62 @@ function dropToTag(tag) {
   } else {
     showToast('🏷️ התגית כבר קיימת');
   }
+}
+
+// ========== WINDOW TAGS ==========
+function renderWindowTags(winId) {
+  const area = document.getElementById('wf_tags_area_'+winId);
+  const input = document.getElementById('wf_tag_input_'+winId);
+  if (!area || !input) return;
+  area.innerHTML = '';
+  const tags = windows[winId]?.tagsList || [];
+  tags.forEach((tag, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'tag-input-chip';
+    chip.innerHTML = `${tag}<button onclick="removeWindowTag('${winId}',${i})">×</button>`;
+    area.appendChild(chip);
+  });
+  area.appendChild(input);
+}
+
+function handleWindowTagInput(e, winId) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = e.target.value.trim().replace(',','');
+    if (!val) return;
+    if (!windows[winId]) return;
+    if (!windows[winId].tagsList) windows[winId].tagsList = [];
+    if (!windows[winId].tagsList.includes(val)) {
+      windows[winId].tagsList.push(val);
+      renderWindowTags(winId);
+      markWindowChanged(winId);
+    }
+    e.target.value = '';
+  }
+}
+
+function removeWindowTag(winId, i) {
+  if (!windows[winId]?.tagsList) return;
+  windows[winId].tagsList.splice(i, 1);
+  renderWindowTags(winId);
+  markWindowChanged(winId);
+}
+
+// ========== DUPLICATE ==========
+function duplicatePost(postId, fromWinId) {
+  const src = postId ? posts.find(p => p.id === postId) : null;
+  const title = src ? src.title : (document.getElementById('wf_title_'+fromWinId)?.value||'');
+  const body = src ? src.body : (document.getElementById('wf_body_'+fromWinId)?.value||'');
+  const visual = src ? src.visual : (document.getElementById('wf_visual_'+fromWinId)?.value||'');
+  const status = src ? src.status : (document.getElementById('wf_status_'+fromWinId)?.value||'idea');
+  const tags = src ? [...(src.tags||[])] : [...(windows[fromWinId]?.tagsList||[])];
+  const date = src ? (src.date||'') : (document.getElementById('wf_date_'+fromWinId)?.value||'');
+  const newPost = { id: Date.now(), created: Date.now(), title: title + ' (עותק)', body, visual, status, tags, date };
+  posts.unshift(newPost);
+  render();
+  savePosts(newPost, 'savePost');
+  openWindow(newPost);
+  showToast('⧉ הפוסט שוכפל!');
 }
 
 // ========== START ==========
