@@ -3,1323 +3,269 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>מנהל פוסטים | אסף יביטון</title>
+<title>פוסט מנג׳ר | אסף יעיש ביטון</title>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f0f13;
-    --surface: #17171e;
-    --surface2: #1e1e28;
-    --surface3: #25252f;
-    --border: #2e2e3e;
-    --accent: #6c63ff;
-    --accent2: #ff6584;
-    --accent3: #43e97b;
-    --text: #e8e8f0;
-    --text2: #9090a8;
-    --text3: #5a5a72;
-    --ready: #43e97b;
-    --draft: #f7c948;
-    --idea: #6c63ff;
-    --published: #4fc3f7;
+    --bg: #0f0f13; --surface: #17171e; --surface2: #1e1e28; --surface3: #25252f;
+    --border: #2e2e3e; --accent: #6c63ff; --accent2: #ff6584; --accent3: #43e97b;
+    --text: #e8e8f0; --text2: #9090a8; --text3: #5a5a72;
+    --ready: #43e97b; --draft: #f7c948; --idea: #6c63ff; --published: #4fc3f7;
     --shadow: 0 8px 32px rgba(0,0,0,0.4);
   }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: 'Heebo', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    direction: rtl;
-  }
-
-  /* Sidebar */
-  .layout { display: flex; min-height: 100vh; }
-
-  .sidebar {
-    width: 260px;
-    min-width: 260px;
-    background: var(--surface);
-    border-left: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow-y: auto;
-  }
-
-  .sidebar-logo {
-    padding: 28px 24px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .sidebar-logo h1 {
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--text);
-    letter-spacing: -0.5px;
-  }
-
-  .sidebar-logo span {
-    font-size: 12px;
-    color: var(--text3);
-    font-weight: 400;
-    display: block;
-    margin-top: 2px;
-  }
-
-  .sidebar-section {
-    padding: 20px 16px 8px;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--text3);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-  }
-
-  .sidebar-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 16px;
-    margin: 2px 8px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text2);
-    transition: all 0.15s;
-    border: none;
-    background: none;
-    width: calc(100% - 16px);
-    text-align: right;
-  }
-
-  .sidebar-btn:hover { background: var(--surface2); color: var(--text); }
-  .sidebar-btn.active { background: var(--accent); color: #fff; }
-
-  .sidebar-btn .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .count-badge {
-    margin-right: auto;
-    background: var(--surface3);
-    color: var(--text3);
-    font-size: 11px;
-    padding: 2px 7px;
-    border-radius: 10px;
-    font-weight: 600;
-  }
-
-  .sidebar-btn.active .count-badge {
-    background: rgba(255,255,255,0.2);
-    color: #fff;
-  }
-
-  .tag-list { padding: 4px 8px; }
-
-  .tag-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
-    margin: 3px 4px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    border: 1.5px solid var(--border);
-    color: var(--text2);
-    background: none;
-    transition: all 0.15s;
-  }
-
-  .tag-chip:hover, .tag-chip.active {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: rgba(108,99,255,0.08);
-  }
-
-  .new-post-btn {
-    margin: 16px;
-    padding: 12px;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: 'Heebo', sans-serif;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .new-post-btn:hover { background: #5b52ee; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(108,99,255,0.4); }
-
-  /* Main */
-  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-
-  .topbar {
-    padding: 20px 28px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    background: var(--surface);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
-  .topbar h2 { font-size: 20px; font-weight: 800; flex: 1; }
-
-  .search-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 14px;
-    width: 260px;
-  }
-
-  .search-box input {
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-size: 14px;
-    font-family: 'Heebo', sans-serif;
-    width: 100%;
-    direction: rtl;
-  }
-
-  .search-box input::placeholder { color: var(--text3); }
-
-  .view-toggle { display: flex; gap: 4px; }
-
-  .view-btn {
-    padding: 8px 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: none;
-    color: var(--text3);
-    cursor: pointer;
-    transition: all 0.15s;
-    font-size: 16px;
-  }
-
-  .view-btn.active { background: var(--surface2); color: var(--text); border-color: var(--accent); }
-
-  /* Stats bar */
-  .stats-bar {
-    display: flex;
-    gap: 1px;
-    background: var(--border);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .stat-item {
-    flex: 1;
-    padding: 16px 20px;
-    background: var(--surface);
-    text-align: center;
-  }
-
-  .stat-item .num {
-    font-size: 28px;
-    font-weight: 900;
-    line-height: 1;
-  }
-
-  .stat-item .label {
-    font-size: 11px;
-    color: var(--text3);
-    margin-top: 4px;
-    font-weight: 500;
-  }
-
-  /* Posts area */
-  .posts-area {
-    flex: 1;
-    padding: 24px 28px;
-    overflow-y: auto;
-  }
-
-  /* Grid view */
-  .posts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
-  }
-
-  /* List view */
-  .posts-list { display: flex; flex-direction: column; gap: 10px; }
-
-  .post-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .post-card::before {
-    content: '';
-    position: absolute;
-    top: 0; right: 0;
-    width: 3px;
-    height: 100%;
-    border-radius: 0 14px 14px 0;
-  }
-
-  .post-card.status-ready::before { background: var(--ready); }
-  .post-card.status-draft::before { background: var(--draft); }
-  .post-card.status-idea::before { background: var(--idea); }
-  .post-card.status-published::before { background: var(--published); }
-
-  .post-card:hover {
-    border-color: var(--accent);
-    background: var(--surface2);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow);
-  }
-
-  .post-card-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 12px;
-    gap: 8px;
-  }
-
-  .post-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.4;
-    flex: 1;
-  }
-
-  .status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    flex-shrink: 0;
-  }
-
-  .badge-ready { background: rgba(67,233,123,0.12); color: var(--ready); }
-  .badge-draft { background: rgba(247,201,72,0.12); color: var(--draft); }
-  .badge-idea { background: rgba(108,99,255,0.12); color: var(--idea); }
-  .badge-published { background: rgba(79,195,247,0.12); color: var(--published); }
-
-  .post-body {
-    font-size: 13px;
-    color: var(--text2);
-    line-height: 1.6;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin-bottom: 14px;
-  }
-
-  .post-visual {
-    font-size: 12px;
-    color: var(--text3);
-    background: var(--surface2);
-    padding: 6px 10px;
-    border-radius: 6px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .post-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  .post-tags { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; }
-
-  .post-tag {
-    font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 4px;
-    background: var(--surface3);
-    color: var(--text3);
-    font-weight: 500;
-  }
-
-  .post-date { font-size: 11px; color: var(--text3); flex-shrink: 0; }
-
-  .post-actions {
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-
-  .post-card:hover .post-actions { opacity: 1; }
-
-  .action-btn {
-    padding: 5px 8px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--surface3);
-    color: var(--text2);
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: 'Heebo', sans-serif;
-  }
-
-  .action-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .action-btn.danger:hover { background: var(--accent2); border-color: var(--accent2); }
-
-  /* List view card */
-  .post-card-list {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 14px 20px;
-  }
-
-  .post-card-list .post-title { font-size: 14px; }
-  .post-card-list .post-body {
-    -webkit-line-clamp: 1;
-    margin-bottom: 0;
-    font-size: 12px;
-  }
-
-  /* Modal */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(4px);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-  }
-
-  .modal-overlay.open { opacity: 1; pointer-events: all; }
-
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    width: 100%;
-    max-width: 700px;
-    max-height: 90vh;
-    overflow-y: auto;
-    padding: 32px;
-    transform: translateY(20px);
-    transition: transform 0.2s;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
-  }
-
-  .modal-overlay.open .modal { transform: translateY(0); }
-
-  .modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 28px;
-  }
-
-  .modal-title { font-size: 20px; font-weight: 800; }
-
-  .modal-close {
-    width: 36px; height: 36px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: none;
-    color: var(--text2);
-    font-size: 20px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
-  }
-
-  .modal-close:hover { background: var(--surface2); color: var(--text); }
-
-  .form-row { margin-bottom: 20px; }
-
-  .form-label {
-    display: block;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text3);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-
-  .form-input, .form-textarea, .form-select {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    color: var(--text);
-    font-size: 14px;
-    font-family: 'Heebo', sans-serif;
-    outline: none;
-    transition: border-color 0.15s;
-    direction: rtl;
-  }
-
-  .form-input:focus, .form-textarea:focus, .form-select:focus {
-    border-color: var(--accent);
-  }
-
-  .form-textarea {
-    min-height: 140px;
-    resize: vertical;
-    line-height: 1.7;
-  }
-
-  .form-select option { background: var(--surface2); }
-
-  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-
-  .tags-input-area {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 12px;
-    min-height: 48px;
-    align-items: center;
-    cursor: text;
-  }
-
-  .tags-input-area:focus-within { border-color: var(--accent); }
-
-  .tag-input-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: var(--surface3);
-    color: var(--text);
-    padding: 3px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  .tag-input-chip button {
-    background: none;
-    border: none;
-    color: var(--text3);
-    cursor: pointer;
-    font-size: 14px;
-    line-height: 1;
-    padding: 0;
-  }
-
-  .tag-input-chip button:hover { color: var(--accent2); }
-
-  .tags-input {
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-size: 13px;
-    font-family: 'Heebo', sans-serif;
-    min-width: 100px;
-    flex: 1;
-    direction: rtl;
-  }
-
-  .modal-footer {
-    display: flex;
-    gap: 10px;
-    margin-top: 28px;
-    justify-content: flex-end;
-  }
-
-  .btn-primary {
-    padding: 12px 24px;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: 'Heebo', sans-serif;
-    transition: all 0.15s;
-  }
-
-  .btn-primary:hover { background: #5b52ee; }
-
-  .btn-secondary {
-    padding: 12px 24px;
-    background: none;
-    color: var(--text2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: 'Heebo', sans-serif;
-    transition: all 0.15s;
-  }
-
-  .btn-secondary:hover { background: var(--surface2); color: var(--text); }
-
-  .btn-copy {
-    padding: 12px 24px;
-    background: rgba(67,233,123,0.1);
-    color: var(--ready);
-    border: 1px solid rgba(67,233,123,0.2);
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: 'Heebo', sans-serif;
-    transition: all 0.15s;
-  }
-
-  .btn-copy:hover { background: rgba(67,233,123,0.2); }
-
-  /* Empty state */
-  .empty-state {
-    text-align: center;
-    padding: 80px 20px;
-    color: var(--text3);
-  }
-
-  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
-  .empty-state h3 { font-size: 18px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
-  .empty-state p { font-size: 14px; }
-
-  /* Toast */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: var(--surface3);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 12px 20px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 500;
-    z-index: 200;
-    transition: transform 0.3s;
-    box-shadow: var(--shadow);
-  }
-
-  .toast.show { transform: translateX(-50%) translateY(0); }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--border); }
-
-  .char-counter {
-    text-align: left;
-    font-size: 11px;
-    color: var(--text3);
-    margin-top: 4px;
-  }
-
-  .char-counter.warn { color: var(--draft); }
-  .char-counter.over { color: var(--accent2); }
-
-  /* ========== MOBILE ========== */
-  @media (max-width: 768px) {
-    .layout { flex-direction: column; }
-
-    .sidebar {
-      width: 100%;
-      min-width: unset;
-      height: auto;
-      position: relative;
-      border-left: none;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .sidebar-logo { padding: 16px 16px 12px; }
-    .sidebar-logo h1 { font-size: 16px; }
-
-    .new-post-btn { margin: 10px 12px; padding: 10px; }
-
-    /* Collapsible sidebar on mobile */
-    .sidebar-section,
-    .sidebar-btn:not(.active),
-    .tag-list { display: none; }
-
-    .sidebar-filters {
-      display: flex;
-      overflow-x: auto;
-      gap: 6px;
-      padding: 8px 12px;
-      scrollbar-width: none;
-    }
-
-    .sidebar-filters::-webkit-scrollbar { display: none; }
-
-    .sidebar-btn {
-      display: inline-flex !important;
-      white-space: nowrap;
-      flex-shrink: 0;
-      width: auto !important;
-      margin: 0;
-      padding: 7px 14px;
-      font-size: 13px;
-    }
-
-    .topbar {
-      padding: 12px 16px;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .topbar h2 { font-size: 16px; width: 100%; }
-
-    .search-box { width: 100%; flex: 1; }
-
-    .stats-bar { overflow-x: auto; }
-    .stat-item { min-width: 80px; padding: 12px 10px; }
-    .stat-item .num { font-size: 22px; }
-    .stat-item .label { font-size: 10px; }
-
-    .posts-area { padding: 16px; }
-
-    .posts-grid {
-      grid-template-columns: 1fr !important;
-    }
-
-    .post-card { padding: 16px; }
-    .post-actions { opacity: 1 !important; }
-
-    .modal { padding: 20px 16px; border-radius: 16px 16px 0 0; }
-    .modal-overlay { align-items: flex-end; padding: 0; }
-
-    .form-row-2 { grid-template-columns: 1fr; }
-
-    .modal-footer { flex-wrap: wrap; }
-    .modal-footer button { flex: 1; min-width: 120px; }
-  }
-
-
-  /* Trash */
-  .badge-deleted { background: rgba(255,101,132,0.12); color: var(--accent2); }
-  .trash-timer {
-    font-size: 11px;
-    color: var(--accent2);
-    background: rgba(255,101,132,0.08);
-    padding: 4px 8px;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    display: inline-block;
-  }
-  .restore-btn {
-    padding: 5px 10px;
-    border-radius: 6px;
-    border: 1px solid var(--accent);
-    background: rgba(108,99,255,0.1);
-    color: var(--accent);
-    font-size: 12px;
-    cursor: pointer;
-    font-family: 'Heebo', sans-serif;
-    transition: all 0.15s;
-  }
-  .restore-btn:hover { background: var(--accent); color: #fff; }
-
-
-  /* ========== MOBILE WRITING UX ========== */
-  @media (max-width: 768px) {
-    .modal-overlay {
-      align-items: flex-end;
-      padding: 0;
-    }
-
-    .modal {
-      border-radius: 20px 20px 0 0;
-      max-height: 92vh;
-      padding: 20px 16px 0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .modal-header { flex-shrink: 0; margin-bottom: 16px; }
-
-    .modal-body-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding-bottom: 80px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    #field-body {
-      min-height: 200px;
-      font-size: 16px !important;
-      line-height: 1.8;
-    }
-
-    .form-input, .form-select {
-      font-size: 16px !important;
-      padding: 14px 16px;
-    }
-
-    .form-label { font-size: 11px; margin-bottom: 6px; }
-
-    .form-row { margin-bottom: 16px; }
-
-    /* Sticky footer above keyboard */
-    .modal-footer {
-      position: sticky;
-      bottom: 0;
-      background: var(--surface);
-      padding: 12px 0 20px;
-      margin-top: 0;
-      border-top: 1px solid var(--border);
-      flex-shrink: 0;
-      gap: 8px;
-    }
-
-    .modal-footer button {
-      flex: 1;
-      padding: 14px;
-      font-size: 15px;
-    }
-
-    /* Step indicator */
-    .mobile-steps {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 16px;
-      padding: 0 2px;
-    }
-
-    .step-dot {
-      height: 3px;
-      flex: 1;
-      border-radius: 2px;
-      background: var(--border);
-      transition: background 0.2s;
-    }
-
-    .step-dot.active { background: var(--accent); }
-    .step-dot.done { background: var(--ready); }
-
-    .char-counter { font-size: 12px; margin-top: 6px; }
-  }
-
-  @media (min-width: 769px) {
-    .mobile-steps { display: none; }
-    .modal-body-scroll { overflow: visible; }
-  }
-
-
-  /* ========== LOGIN ========== */
-  .login-overlay {
-    position: fixed;
-    inset: 0;
-    background: var(--bg);
-    z-index: 999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-
-  .login-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 40px 32px;
-    width: 100%;
-    max-width: 360px;
-    text-align: center;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
-  }
-
-  .login-logo { font-size: 36px; margin-bottom: 12px; }
-  .login-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
-  .login-sub { font-size: 13px; color: var(--text3); margin-bottom: 28px; }
-
-  .login-input {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    color: var(--text);
-    font-size: 16px;
-    font-family: 'Heebo', sans-serif;
-    outline: none;
-    text-align: center;
-    letter-spacing: 3px;
-    margin-bottom: 12px;
-    direction: ltr;
-    transition: border-color 0.15s;
-  }
-
-  .login-input:focus { border-color: var(--accent); }
-  .login-input.error { border-color: var(--accent2); animation: shake 0.3s; }
-
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-8px); }
-    75% { transform: translateX(8px); }
-  }
-
-  .login-btn {
-    width: 100%;
-    padding: 14px;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: 'Heebo', sans-serif;
-    transition: all 0.2s;
-  }
-
-  .login-btn:hover { background: #5b52ee; }
-  .login-error { color: var(--accent2); font-size: 13px; margin-top: 10px; min-height: 20px; }
-
-
-  /* ========== LOGIN TRACKER ========== */
-  .devices-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--text3);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    padding: 5px 12px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .devices-badge:hover { border-color: var(--accent); color: var(--accent); }
-
-  .devices-modal {
-    position: fixed;
-    top: 60px;
-    left: 20px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 16px;
-    min-width: 280px;
-    z-index: 50;
-    box-shadow: var(--shadow);
-    display: none;
-  }
-  .devices-modal.open { display: block; }
-  .devices-modal h4 { font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text2); }
-  .device-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 12px;
-    color: var(--text2);
-  }
-  .device-row:last-child { border-bottom: none; }
-  .device-row .device-icon { font-size: 18px; }
-  .device-row .device-info { flex: 1; }
-  .device-row .device-time { color: var(--text3); font-size: 11px; }
-
-
-  /* ========== AUTOSAVE ========== */
-  .autosave-indicator {
-    font-size: 11px;
-    color: var(--text3);
-    margin-right: auto;
-    transition: color 0.3s;
-  }
-  .autosave-indicator.saving { color: var(--draft); }
-  .autosave-indicator.saved { color: var(--ready); }
-
-
-  /* ========== MULTI WINDOW ========== */
-  @media (min-width: 769px) {
-    .modal-overlay { display: none !important; }
-
-    .windows-container {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 100;
-    }
-
-    .post-window {
-      position: absolute;
-      width: 480px;
-      max-height: 85vh;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-      display: flex;
-      flex-direction: column;
-      pointer-events: all;
-      transition: box-shadow 0.15s;
-      overflow: hidden;
-    }
-
-    .post-window.active {
-      border-color: var(--accent);
-      box-shadow: 0 24px 80px rgba(108,99,255,0.3);
-      z-index: 110 !important;
-    }
-
-    .post-window-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      background: var(--surface2);
-      border-bottom: 1px solid var(--border);
-      cursor: move;
-      user-select: none;
-      flex-shrink: 0;
-    }
-
-    .post-window-title {
-      flex: 1;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text2);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .window-action-btn {
-      width: 24px; height: 24px;
-      border-radius: 6px;
-      border: none;
-      background: var(--surface3);
-      color: var(--text3);
-      font-size: 14px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s;
-      flex-shrink: 0;
-    }
-
-    .window-action-btn:hover { background: var(--accent2); color: #fff; }
-    .window-action-btn.minimize { background: var(--surface3); }
-    .window-action-btn.minimize:hover { background: var(--draft); color: #000; }
-
-    .post-window-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-    }
-
-    .post-window.minimized .post-window-body,
-    .post-window.minimized .post-window-footer { display: none; }
-    .post-window.minimized { max-height: 48px; }
-
-    .post-window-footer {
-      padding: 12px 16px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-shrink: 0;
-      background: var(--surface);
-    }
-
-    /* Windows taskbar */
-    .windows-taskbar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 48px;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 0 16px;
-      z-index: 90;
-      overflow-x: auto;
-    }
-
-    .taskbar-tab {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
-      border-radius: 8px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text2);
-      cursor: pointer;
-      white-space: nowrap;
-      max-width: 180px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: all 0.15s;
-      flex-shrink: 0;
-    }
-
-    .taskbar-tab:hover { border-color: var(--accent); color: var(--text); }
-    .taskbar-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-
-    .taskbar-new-btn {
-      padding: 6px 14px;
-      border-radius: 8px;
-      background: none;
-      border: 1px dashed var(--border);
-      color: var(--text3);
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: 'Heebo', sans-serif;
-      flex-shrink: 0;
-    }
-
-    .taskbar-new-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-    .posts-area { padding-bottom: 60px; }
-  }
-
-  @media (max-width: 768px) {
-    .windows-container, .windows-taskbar { display: none; }
-  }
-
-
-  /* ========== MOBILE TAGS DRAWER ========== */
-  @media (max-width: 768px) {
-    .mobile-tags-fab {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text2);
-      font-size: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      cursor: pointer;
-      z-index: 80;
-      transition: all 0.2s;
-    }
-    .mobile-tags-fab:hover { border-color: var(--accent); color: var(--accent); }
-    .mobile-tags-fab .fab-count {
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      background: var(--accent);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 700;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .mobile-tags-drawer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-radius: 20px 20px 0 0;
-      padding: 16px 16px 32px;
-      z-index: 200;
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-      max-height: 60vh;
-      overflow-y: auto;
-    }
-    .mobile-tags-drawer.open { transform: translateY(0); }
-
-    .drawer-handle {
-      width: 36px;
-      height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      margin: 0 auto 16px;
-    }
-
-    .drawer-title {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 14px;
-      color: var(--text);
-    }
-
-    .drawer-tags-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .drawer-tag-btn {
-      padding: 8px 16px;
-      border-radius: 20px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text2);
-      font-size: 13px;
-      font-weight: 600;
-      font-family: 'Heebo', sans-serif;
-      cursor: pointer;
-      transition: all 0.15s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .drawer-tag-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .drawer-tag-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .drawer-tag-btn .tag-count { font-size: 11px; opacity: 0.7; }
-
-    .drawer-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 199;
-      display: none;
-    }
-    .drawer-overlay.open { display: block; }
-  }
-
-  @media (min-width: 769px) {
-    .mobile-tags-fab,
-    .mobile-tags-drawer,
-    .drawer-overlay { display: none !important; }
-  }
-
-
-  .sort-select {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text2);
-    padding: 6px 10px;
-    font-size: 12px;
-    font-family: 'Heebo', sans-serif;
-    outline: none;
-    cursor: pointer;
-    transition: border-color 0.15s;
-  }
-  .sort-select:hover, .sort-select:focus { border-color: var(--accent); color: var(--text); }
-
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Heebo',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; direction:rtl; }
+  .layout { display:flex; min-height:100vh; }
+
+  /* SIDEBAR */
+  .sidebar { width:260px; min-width:260px; background:var(--surface); border-left:1px solid var(--border); display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow-y:auto; }
+  .sidebar-logo { padding:28px 24px 20px; border-bottom:1px solid var(--border); }
+  .sidebar-logo h1 { font-size:18px; font-weight:800; letter-spacing:-0.5px; }
+  .sidebar-logo span { font-size:12px; color:var(--text3); display:block; margin-top:2px; }
+  .sidebar-section { padding:20px 16px 8px; font-size:10px; font-weight:700; color:var(--text3); letter-spacing:1.5px; text-transform:uppercase; }
+  .sidebar-btn { display:flex; align-items:center; gap:10px; padding:10px 16px; margin:2px 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:500; color:var(--text2); transition:all 0.15s; border:none; background:none; width:calc(100% - 16px); text-align:right; font-family:'Heebo',sans-serif; }
+  .sidebar-btn:hover { background:var(--surface2); color:var(--text); }
+  .sidebar-btn.active { background:var(--accent); color:#fff; }
+  .sidebar-btn .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .count-badge { margin-right:auto; background:var(--surface3); color:var(--text3); font-size:11px; padding:2px 7px; border-radius:10px; font-weight:600; }
+  .sidebar-btn.active .count-badge { background:rgba(255,255,255,0.2); color:#fff; }
+  .tag-list { padding:4px 8px; }
+  .tag-chip { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; margin:3px 4px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:1.5px solid var(--border); color:var(--text2); background:none; transition:all 0.15s; font-family:'Heebo',sans-serif; }
+  .tag-chip:hover, .tag-chip.active { border-color:var(--accent); color:var(--accent); background:rgba(108,99,255,0.08); }
+  .new-post-btn { margin:16px; padding:12px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:'Heebo',sans-serif; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .new-post-btn:hover { background:#5b52ee; transform:translateY(-1px); box-shadow:0 4px 20px rgba(108,99,255,0.4); }
+
+  /* MAIN */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .topbar { padding:20px 28px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:16px; background:var(--surface); position:sticky; top:0; z-index:10; }
+  .topbar h2 { font-size:20px; font-weight:800; flex:1; }
+  .search-box { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 14px; width:260px; }
+  .search-box input { background:none; border:none; outline:none; color:var(--text); font-size:14px; font-family:'Heebo',sans-serif; width:100%; direction:rtl; }
+  .search-box input::placeholder { color:var(--text3); }
+  .view-toggle { display:flex; gap:4px; }
+  .view-btn { padding:8px 10px; border-radius:6px; border:1px solid var(--border); background:none; color:var(--text3); cursor:pointer; transition:all 0.15s; font-size:16px; }
+  .view-btn.active { background:var(--surface2); color:var(--text); border-color:var(--accent); }
+  .sort-select { background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text2); padding:6px 10px; font-size:12px; font-family:'Heebo',sans-serif; outline:none; cursor:pointer; transition:border-color 0.15s; }
+  .sort-select:hover, .sort-select:focus { border-color:var(--accent); color:var(--text); }
+
+  /* STATS */
+  .stats-bar { display:flex; gap:1px; background:var(--border); border-bottom:1px solid var(--border); }
+  .stat-item { flex:1; padding:16px 20px; background:var(--surface); text-align:center; }
+  .stat-item .num { font-size:28px; font-weight:900; line-height:1; }
+  .stat-item .label { font-size:11px; color:var(--text3); margin-top:4px; font-weight:500; }
+
+  /* POSTS */
+  .posts-area { flex:1; padding:24px 28px; overflow-y:auto; }
+  .posts-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
+  .posts-list { display:flex; flex-direction:column; gap:10px; }
+  .post-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+  .post-card::before { content:''; position:absolute; top:0; right:0; width:3px; height:100%; border-radius:0 14px 14px 0; }
+  .post-card.status-ready::before { background:var(--ready); }
+  .post-card.status-draft::before { background:var(--draft); }
+  .post-card.status-idea::before { background:var(--idea); }
+  .post-card.status-published::before { background:var(--published); }
+  .post-card.status-deleted::before { background:var(--text3); }
+  .post-card:hover { border-color:var(--accent); background:var(--surface2); transform:translateY(-2px); box-shadow:var(--shadow); }
+  .post-card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px; gap:8px; }
+  .post-title { font-size:15px; font-weight:700; color:var(--text); line-height:1.4; flex:1; }
+  .status-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; flex-shrink:0; }
+  .badge-ready { background:rgba(67,233,123,0.12); color:var(--ready); }
+  .badge-draft { background:rgba(247,201,72,0.12); color:var(--draft); }
+  .badge-idea { background:rgba(108,99,255,0.12); color:var(--idea); }
+  .badge-published { background:rgba(79,195,247,0.12); color:var(--published); }
+  .badge-deleted { background:rgba(90,90,114,0.12); color:var(--text3); }
+  .post-body { font-size:13px; color:var(--text2); line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:14px; }
+  .post-visual { font-size:12px; color:var(--text3); background:var(--surface2); padding:6px 10px; border-radius:6px; margin-bottom:12px; }
+  .post-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .post-tags { display:flex; gap:5px; flex-wrap:wrap; flex:1; }
+  .post-tag { font-size:11px; padding:3px 8px; border-radius:4px; background:var(--surface3); color:var(--text3); font-weight:500; }
+  .post-date { font-size:11px; color:var(--text3); flex-shrink:0; }
+  .post-actions { display:flex; gap:4px; opacity:0; transition:opacity 0.15s; }
+  .post-card:hover .post-actions { opacity:1; }
+  .action-btn { padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--surface3); color:var(--text2); font-size:12px; cursor:pointer; transition:all 0.15s; font-family:'Heebo',sans-serif; }
+  .action-btn:hover { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .action-btn.danger:hover { background:var(--accent2); border-color:var(--accent2); }
+  .restore-btn { padding:5px 10px; border-radius:6px; border:1px solid rgba(67,233,123,0.3); background:rgba(67,233,123,0.08); color:var(--ready); font-size:12px; cursor:pointer; font-family:'Heebo',sans-serif; transition:all 0.15s; }
+  .restore-btn:hover { background:rgba(67,233,123,0.2); }
+  .trash-timer { font-size:11px; color:var(--text3); }
+  .post-card-list { display:flex; align-items:center; gap:16px; padding:14px 20px; }
+  .post-card-list .post-title { font-size:14px; }
+  .post-card-list .post-body { -webkit-line-clamp:1; margin-bottom:0; font-size:12px; }
+
+  /* MODAL */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+  .modal-overlay.open { opacity:1; pointer-events:all; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:20px; width:100%; max-width:700px; max-height:90vh; overflow-y:auto; padding:32px; transform:translateY(20px); transition:transform 0.2s; box-shadow:0 24px 80px rgba(0,0,0,0.6); }
+  .modal-overlay.open .modal { transform:translateY(0); }
+  .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
+  .modal-title { font-size:20px; font-weight:800; }
+  .modal-close { width:36px; height:36px; border-radius:8px; border:1px solid var(--border); background:none; color:var(--text2); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+  .modal-close:hover { background:var(--surface2); color:var(--text); }
+  .form-row { margin-bottom:20px; }
+  .form-label { display:block; font-size:12px; font-weight:700; color:var(--text3); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; }
+  .form-input, .form-textarea, .form-select { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 16px; color:var(--text); font-size:14px; font-family:'Heebo',sans-serif; outline:none; transition:border-color 0.15s; direction:rtl; }
+  .form-input:focus, .form-textarea:focus, .form-select:focus { border-color:var(--accent); }
+  .form-textarea { min-height:140px; resize:vertical; line-height:1.7; }
+  .form-select option { background:var(--surface2); }
+  .form-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .tags-input-area { display:flex; flex-wrap:wrap; gap:6px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; min-height:48px; align-items:center; cursor:text; }
+  .tags-input-area:focus-within { border-color:var(--accent); }
+  .tag-input-chip { display:inline-flex; align-items:center; gap:5px; background:var(--surface3); color:var(--text); padding:3px 10px; border-radius:6px; font-size:12px; font-weight:500; }
+  .tag-input-chip button { background:none; border:none; color:var(--text3); cursor:pointer; font-size:14px; line-height:1; padding:0; }
+  .tag-input-chip button:hover { color:var(--accent2); }
+  .tags-input { background:none; border:none; outline:none; color:var(--text); font-size:13px; font-family:'Heebo',sans-serif; min-width:100px; flex:1; direction:rtl; }
+  .modal-footer { display:flex; gap:10px; margin-top:28px; align-items:center; }
+  .btn-primary { padding:12px 24px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:'Heebo',sans-serif; transition:all 0.15s; }
+  .btn-primary:hover { background:#5b52ee; }
+  .btn-secondary { padding:12px 24px; background:none; color:var(--text2); border:1px solid var(--border); border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; font-family:'Heebo',sans-serif; transition:all 0.15s; }
+  .btn-secondary:hover { background:var(--surface2); color:var(--text); }
+  .btn-copy { padding:12px 24px; background:rgba(67,233,123,0.1); color:var(--ready); border:1px solid rgba(67,233,123,0.2); border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:'Heebo',sans-serif; transition:all 0.15s; }
+  .btn-copy:hover { background:rgba(67,233,123,0.2); }
+  .char-counter { text-align:left; font-size:11px; color:var(--text3); margin-top:4px; }
+  .char-counter.warn { color:var(--draft); }
+  .char-counter.over { color:var(--accent2); }
+  .autosave-indicator { font-size:11px; color:var(--text3); margin-right:auto; transition:color 0.3s; }
+  .autosave-indicator.saving { color:var(--draft); }
+  .autosave-indicator.saved { color:var(--ready); }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--surface3); border:1px solid var(--border); color:var(--text); padding:12px 20px; border-radius:10px; font-size:14px; font-weight:500; z-index:500; transition:transform 0.3s; box-shadow:var(--shadow); }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+
+  /* EMPTY */
+  .empty-state { text-align:center; padding:80px 20px; color:var(--text3); }
+  .empty-state .icon { font-size:48px; margin-bottom:16px; }
+  .empty-state h3 { font-size:18px; font-weight:700; color:var(--text2); margin-bottom:8px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:3px; }
+
+  /* TOPBAR EXTRAS */
+  .sync-indicator { font-size:12px; color:var(--text3); }
+  .devices-badge { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--text3); background:var(--surface2); border:1px solid var(--border); padding:5px 12px; border-radius:20px; cursor:pointer; transition:all 0.15s; }
+  .devices-badge:hover { border-color:var(--accent); color:var(--accent); }
+  .devices-modal { position:fixed; top:60px; left:20px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; min-width:280px; z-index:50; box-shadow:var(--shadow); display:none; }
+  .devices-modal.open { display:block; }
+  .devices-modal h4 { font-size:13px; font-weight:700; margin-bottom:12px; color:var(--text2); }
+  .device-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); font-size:12px; color:var(--text2); }
+  .device-row:last-child { border-bottom:none; }
+  .device-row .device-time { color:var(--text3); font-size:11px; }
+
+  /* MULTI-WINDOW (desktop) */
+  @media (min-width:769px) {
+    .modal-overlay { display:none !important; }
+    .windows-container { position:fixed; inset:0; pointer-events:none; z-index:100; }
+    .post-window { position:absolute; width:480px; max-height:85vh; background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.6); display:flex; flex-direction:column; pointer-events:all; transition:box-shadow 0.15s; overflow:hidden; }
+    .post-window.active { border-color:var(--accent); box-shadow:0 24px 80px rgba(108,99,255,0.3); z-index:110 !important; }
+    .post-window-header { display:flex; align-items:center; gap:8px; padding:12px 16px; background:var(--surface2); border-bottom:1px solid var(--border); cursor:move; user-select:none; flex-shrink:0; }
+    .post-window-title { flex:1; font-size:13px; font-weight:600; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .window-action-btn { width:24px; height:24px; border-radius:6px; border:none; background:var(--surface3); color:var(--text3); font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; flex-shrink:0; }
+    .window-action-btn:hover { background:var(--accent2); color:#fff; }
+    .window-action-btn.minimize:hover { background:var(--draft); color:#000; }
+    .post-window-body { flex:1; overflow-y:auto; padding:20px; }
+    .post-window.minimized .post-window-body, .post-window.minimized .post-window-footer { display:none; }
+    .post-window.minimized { max-height:48px; }
+    .post-window-footer { padding:12px 16px; border-top:1px solid var(--border); display:flex; gap:8px; align-items:center; flex-shrink:0; background:var(--surface); }
+    .windows-taskbar { position:fixed; bottom:0; left:0; right:0; height:48px; background:var(--surface); border-top:1px solid var(--border); display:flex; align-items:center; gap:6px; padding:0 16px; z-index:90; overflow-x:auto; }
+    .taskbar-tab { display:flex; align-items:center; gap:8px; padding:6px 14px; border-radius:8px; background:var(--surface2); border:1px solid var(--border); font-size:12px; font-weight:600; color:var(--text2); cursor:pointer; white-space:nowrap; max-width:180px; overflow:hidden; text-overflow:ellipsis; transition:all 0.15s; flex-shrink:0; }
+    .taskbar-tab:hover { border-color:var(--accent); color:var(--text); }
+    .taskbar-tab.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .taskbar-new-btn { padding:6px 14px; border-radius:8px; background:none; border:1px dashed var(--border); color:var(--text3); font-size:13px; font-weight:700; cursor:pointer; transition:all 0.15s; font-family:'Heebo',sans-serif; flex-shrink:0; }
+    .taskbar-new-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .posts-area { padding-bottom:60px; }
+    .mobile-tags-fab, .mobile-tags-drawer, .drawer-overlay { display:none !important; }
+  }
+
+  /* MOBILE */
+  @media (max-width:768px) {
+    .windows-container, .windows-taskbar { display:none; }
+    .sidebar { width:100%; min-width:unset; height:auto; position:relative; border-left:none; border-bottom:1px solid var(--border); }
+    .sidebar-logo { padding:16px 16px 12px; }
+    .sidebar-logo h1 { font-size:16px; }
+    .new-post-btn { margin:10px 12px; padding:10px; }
+    .sidebar-section, .sidebar-btn:not(.active), .tag-list { display:none; }
+    .sidebar-filters { display:flex; overflow-x:auto; gap:6px; padding:8px 12px; scrollbar-width:none; }
+    .sidebar-filters::-webkit-scrollbar { display:none; }
+    .sidebar-btn { display:inline-flex !important; white-space:nowrap; flex-shrink:0; width:auto !important; margin:0; padding:7px 14px; font-size:13px; }
+    .topbar { padding:12px 16px; flex-wrap:wrap; gap:10px; }
+    .topbar h2 { font-size:16px; width:100%; }
+    .search-box { width:100%; flex:1; }
+    .stats-bar { overflow-x:auto; }
+    .stat-item { min-width:80px; padding:12px 10px; }
+    .stat-item .num { font-size:20px; }
+    .posts-area { padding:16px; padding-bottom:80px; }
+    .posts-grid { grid-template-columns:1fr; }
+    .modal-overlay { align-items:flex-end; padding:0; }
+    .modal { border-radius:20px 20px 0 0; max-height:92vh; padding:20px 16px 0; display:flex; flex-direction:column; }
+    .modal-header { flex-shrink:0; margin-bottom:16px; }
+    .modal-body-scroll { flex:1; overflow-y:auto; padding-bottom:80px; -webkit-overflow-scrolling:touch; }
+    #field-body { min-height:200px; font-size:16px !important; line-height:1.8; }
+    .form-input, .form-select { font-size:16px !important; padding:14px 16px; }
+    .modal-footer { position:sticky; bottom:0; background:var(--surface); padding:12px 0 20px; margin-top:0; border-top:1px solid var(--border); flex-shrink:0; gap:8px; }
+    .modal-footer button { flex:1; padding:14px; font-size:15px; }
+
+    /* MOBILE TAGS DRAWER */
+    .mobile-tags-fab { position:fixed; bottom:20px; left:20px; width:48px; height:48px; border-radius:50%; background:var(--surface); border:1px solid var(--border); color:var(--text2); font-size:20px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(0,0,0,0.4); cursor:pointer; z-index:80; transition:all 0.2s; }
+    .mobile-tags-fab:hover { border-color:var(--accent); color:var(--accent); }
+    .fab-count { position:absolute; top:-4px; right:-4px; background:var(--accent); color:#fff; font-size:10px; font-weight:700; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+    .mobile-tags-drawer { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); border-radius:20px 20px 0 0; padding:16px 16px 32px; z-index:200; transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.4,0,0.2,1); max-height:60vh; overflow-y:auto; }
+    .mobile-tags-drawer.open { transform:translateY(0); }
+    .drawer-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 16px; }
+    .drawer-title { font-size:15px; font-weight:700; margin-bottom:14px; }
+    .drawer-tags-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .drawer-tag-btn { padding:8px 16px; border-radius:20px; background:var(--surface2); border:1px solid var(--border); color:var(--text2); font-size:13px; font-weight:600; font-family:'Heebo',sans-serif; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; gap:6px; }
+    .drawer-tag-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .drawer-tag-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:199; display:none; }
+    .drawer-overlay.open { display:block; }
+  }
+
+  /* LOGIN */
+  .login-overlay { position:fixed; inset:0; background:var(--bg); z-index:999; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .login-box { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:40px 32px; width:100%; max-width:360px; text-align:center; box-shadow:0 24px 80px rgba(0,0,0,0.6); }
+  .login-logo { font-size:36px; margin-bottom:12px; }
+  .login-title { font-size:22px; font-weight:800; margin-bottom:4px; }
+  .login-sub { font-size:13px; color:var(--text3); margin-bottom:28px; }
+  .login-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px 16px; color:var(--text); font-size:16px; font-family:'Heebo',sans-serif; outline:none; text-align:center; letter-spacing:3px; margin-bottom:12px; direction:ltr; transition:border-color 0.15s; }
+  .login-input:focus { border-color:var(--accent); }
+  .login-input.error { border-color:var(--accent2); animation:shake 0.3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+  .login-btn { width:100%; padding:14px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; font-family:'Heebo',sans-serif; transition:all 0.2s; }
+  .login-btn:hover { background:#5b52ee; }
+  .login-error { color:var(--accent2); font-size:13px; margin-top:10px; min-height:20px; }
 </style>
 </head>
 <body>
 
 <div class="layout">
-  <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-logo">
       <h1>📋 פוסט מנג׳ר</h1>
       <span>LinkedIn · אסף יעיש ביטון</span>
     </div>
-
-    <button class="new-post-btn" onclick="isDesktop() ? openWindow() : openModal()">
-      ＋ פוסט חדש
-    </button>
-
+    <button class="new-post-btn" onclick="isDesktop() ? openWindow() : openModal()">＋ פוסט חדש</button>
     <div class="sidebar-section">סטטוס</div>
     <div class="sidebar-filters">
-    <button class="sidebar-btn active" onclick="filterStatus('all', this)">
-      <span>📁</span> הכל
-      <span class="count-badge" id="count-all">0</span>
-    </button>
-    <button class="sidebar-btn" onclick="filterStatus('idea', this)">
-      <span class="dot" style="background:var(--idea)"></span> רעיון
-      <span class="count-badge" id="count-idea">0</span>
-    </button>
-    <button class="sidebar-btn" onclick="filterStatus('draft', this)">
-      <span class="dot" style="background:var(--draft)"></span> דראפט
-      <span class="count-badge" id="count-draft">0</span>
-    </button>
-    <button class="sidebar-btn" onclick="filterStatus('ready', this)">
-      <span class="dot" style="background:var(--ready)"></span> מוכן לפרסום
-      <span class="count-badge" id="count-ready">0</span>
-    </button>
-    <button class="sidebar-btn" onclick="filterStatus('published', this)">
-      <span class="dot" style="background:var(--published)"></span> פורסם
-      <span class="count-badge" id="count-published">0</span>
-    </button>
-    <button class="sidebar-btn" onclick="filterStatus('deleted', this)">
-      <span>🗑</span> נמחקו לאחרונה
-      <span class="count-badge" id="count-deleted">0</span>
-    </button>
+      <button class="sidebar-btn active" onclick="filterStatus('all',this)"><span>📁</span> הכל <span class="count-badge" id="count-all">0</span></button>
+      <button class="sidebar-btn" onclick="filterStatus('idea',this)"><span class="dot" style="background:var(--idea)"></span> רעיון <span class="count-badge" id="count-idea">0</span></button>
+      <button class="sidebar-btn" onclick="filterStatus('draft',this)"><span class="dot" style="background:var(--draft)"></span> דראפט <span class="count-badge" id="count-draft">0</span></button>
+      <button class="sidebar-btn" onclick="filterStatus('ready',this)"><span class="dot" style="background:var(--ready)"></span> מוכן לפרסום <span class="count-badge" id="count-ready">0</span></button>
+      <button class="sidebar-btn" onclick="filterStatus('published',this)"><span class="dot" style="background:var(--published)"></span> פורסם <span class="count-badge" id="count-published">0</span></button>
+      <button class="sidebar-btn" onclick="filterStatus('deleted',this)"><span>🗑</span> נמחקו לאחרונה <span class="count-badge" id="count-deleted">0</span></button>
     </div>
-
     <div class="sidebar-section">תגיות</div>
     <div class="tag-list" id="sidebar-tags"></div>
   </div>
 
-  <!-- Main -->
   <div class="main">
     <div class="topbar">
       <h2 id="section-title">כל הפוסטים</h2>
-      <div class="search-box">
-        <span>🔍</span>
-        <input type="text" placeholder="חיפוש..." oninput="searchPosts(this.value)" />
-      </div>
-      <span id="sync-indicator" style="font-size:12px;color:var(--text3);">⏳ טוען...</span>
+      <div class="search-box"><span>🔍</span><input type="text" placeholder="חיפוש..." oninput="searchPosts(this.value)" /></div>
+      <span class="sync-indicator" id="sync-indicator">⏳ טוען...</span>
       <span class="devices-badge" onclick="toggleDevices()" id="devices-badge" style="display:none">📱 <span id="devices-count">0</span> מכשירים</span>
-      <select class="sort-select" id="sort-select" onchange="setSort(this.value)" title="מיון">
+      <select class="sort-select" id="sort-select" onchange="setSort(this.value)">
         <option value="created_desc">🕒 חדש לישן</option>
         <option value="created_asc">🕒 ישן לחדש</option>
         <option value="updated_desc">✏️ עדכון אחרון</option>
@@ -1329,99 +275,38 @@
         <option value="tag">🏷️ לפי תגית</option>
       </select>
       <div class="view-toggle">
-        <button class="view-btn active" onclick="setView('grid', this)" title="גריד">⊞</button>
-        <button class="view-btn" onclick="setView('list', this)" title="רשימה">☰</button>
+        <button class="view-btn active" onclick="setView('grid',this)" title="גריד">⊞</button>
+        <button class="view-btn" onclick="setView('list',this)" title="רשימה">☰</button>
       </div>
     </div>
-
-    <!-- Stats -->
     <div class="stats-bar">
-      <div class="stat-item">
-        <div class="num" id="stat-total" style="color:var(--text)">0</div>
-        <div class="label">סה״כ פוסטים</div>
-      </div>
-      <div class="stat-item">
-        <div class="num" id="stat-ready" style="color:var(--ready)">0</div>
-        <div class="label">מוכנים לפרסום</div>
-      </div>
-      <div class="stat-item">
-        <div class="num" id="stat-draft" style="color:var(--draft)">0</div>
-        <div class="label">דראפטים</div>
-      </div>
-      <div class="stat-item">
-        <div class="num" id="stat-idea" style="color:var(--idea)">0</div>
-        <div class="label">רעיונות</div>
-      </div>
-      <div class="stat-item">
-        <div class="num" id="stat-published" style="color:var(--published)">0</div>
-        <div class="label">פורסמו</div>
-      </div>
+      <div class="stat-item"><div class="num" id="stat-total" style="color:var(--text)">0</div><div class="label">סה״כ פוסטים</div></div>
+      <div class="stat-item"><div class="num" id="stat-ready" style="color:var(--ready)">0</div><div class="label">מוכנים לפרסום</div></div>
+      <div class="stat-item"><div class="num" id="stat-draft" style="color:var(--draft)">0</div><div class="label">דראפטים</div></div>
+      <div class="stat-item"><div class="num" id="stat-idea" style="color:var(--idea)">0</div><div class="label">רעיונות</div></div>
+      <div class="stat-item"><div class="num" id="stat-published" style="color:var(--published)">0</div><div class="label">פורסמו</div></div>
     </div>
-
-    <div class="posts-area">
-      <div id="posts-container" class="posts-grid"></div>
-    </div>
+    <div class="posts-area"><div id="posts-container" class="posts-grid"></div></div>
   </div>
 </div>
 
-<!-- Modal -->
+<!-- Modal (mobile only) -->
 <div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" id="modal-title">פוסט חדש</div>
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
-
-    <div class="mobile-steps">
-      <div class="step-dot done" id="step1"></div>
-      <div class="step-dot" id="step2"></div>
-      <div class="step-dot" id="step3"></div>
-    </div>
-
     <div class="modal-body-scroll">
-      <div class="form-row">
-        <label class="form-label">נושא / כותרת</label>
-        <input type="text" class="form-input" id="field-title" placeholder="מה הנושא המרכזי של הפוסט?"
-          onfocus="setStep(1)" />
-      </div>
-
-      <div class="form-row">
-        <label class="form-label">גוף הפוסט</label>
-        <textarea class="form-textarea" id="field-body" placeholder="כתוב את הפוסט כאן..."
-          oninput="updateCharCount(this)" onfocus="setStep(2)" style="min-height:180px"></textarea>
-        <div class="char-counter" id="char-counter">0 / 3000 תווים</div>
-      </div>
-
-      <div class="form-row">
-        <label class="form-label">הצעה לויז׳ואל</label>
-        <input type="text" class="form-input" id="field-visual" placeholder="תאר את התמונה / גרפיקה המוצעת..."
-          onfocus="setStep(3)" />
-      </div>
-
+      <div class="form-row"><label class="form-label">נושא / כותרת</label><input type="text" class="form-input" id="field-title" placeholder="מה הנושא המרכזי?" /></div>
+      <div class="form-row"><label class="form-label">גוף הפוסט</label><textarea class="form-textarea" id="field-body" placeholder="כתוב את הפוסט כאן..." oninput="updateCharCount(this)" style="min-height:180px"></textarea><div class="char-counter" id="char-counter">0 / 3000 תווים</div></div>
+      <div class="form-row"><label class="form-label">הצעה לויז׳ואל</label><input type="text" class="form-input" id="field-visual" placeholder="תאר את הויז'ואל..." /></div>
       <div class="form-row-2">
-        <div class="form-row" style="margin-bottom:0">
-          <label class="form-label">סטטוס</label>
-          <select class="form-select" id="field-status">
-            <option value="idea">💡 רעיון</option>
-            <option value="draft">✏️ דראפט</option>
-            <option value="ready">✅ מוכן לפרסום</option>
-            <option value="published">🚀 פורסם</option>
-          </select>
-        </div>
-        <div class="form-row" style="margin-bottom:0">
-          <label class="form-label">תאריך מתוכנן</label>
-          <input type="date" class="form-input" id="field-date" />
-        </div>
+        <div class="form-row" style="margin-bottom:0"><label class="form-label">סטטוס</label><select class="form-select" id="field-status"><option value="idea">💡 רעיון</option><option value="draft">✏️ דראפט</option><option value="ready">✅ מוכן לפרסום</option><option value="published">🚀 פורסם</option></select></div>
+        <div class="form-row" style="margin-bottom:0"><label class="form-label">תאריך</label><input type="date" class="form-input" id="field-date" /></div>
       </div>
-
-      <div class="form-row" style="margin-top:16px">
-        <label class="form-label">תגיות</label>
-        <div class="tags-input-area" id="tags-input-area" onclick="document.getElementById('tag-input').focus()">
-          <input type="text" class="tags-input" id="tag-input" placeholder="הוסף תגית ולחץ Enter..." onkeydown="handleTagInput(event)" />
-        </div>
-      </div>
+      <div class="form-row" style="margin-top:16px"><label class="form-label">תגיות</label><div class="tags-input-area" id="tags-input-area" onclick="document.getElementById('tag-input').focus()"><input type="text" class="tags-input" id="tag-input" placeholder="הוסף תגית ולחץ Enter..." onkeydown="handleTagInput(event)" /></div></div>
     </div>
-
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal()">ביטול</button>
       <span class="autosave-indicator" id="autosave-indicator"></span>
@@ -1433,14 +318,40 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- Multi-window system (desktop only) -->
+<!-- Multi-window (desktop) -->
 <div class="windows-container" id="windows-container"></div>
 <div class="windows-taskbar" id="windows-taskbar">
   <button class="taskbar-new-btn" onclick="openWindow()">＋ פוסט חדש</button>
 </div>
 
+<!-- Devices panel -->
+<div class="devices-modal" id="devices-modal">
+  <h4>📱 כניסות אחרונות</h4>
+  <div id="devices-list"></div>
+</div>
+
+<!-- Mobile tags drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeTagsDrawer()"></div>
+<div class="mobile-tags-drawer" id="tags-drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-title">🏷️ סינון לפי תגית</div>
+  <div class="drawer-tags-grid" id="drawer-tags-list"></div>
+</div>
+<button class="mobile-tags-fab" id="tags-fab" onclick="openTagsDrawer()">🏷️<span class="fab-count" id="fab-count" style="display:none">0</span></button>
+
+<!-- Login -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">📋</div>
+    <div class="login-title">פוסט מנג׳ר</div>
+    <div class="login-sub">אסף יעיש ביטון · LinkedIn</div>
+    <input type="password" class="login-input" id="login-input" placeholder="••••••••" onkeydown="if(event.key==='Enter') checkLogin()" autocomplete="current-password" />
+    <button class="login-btn" onclick="checkLogin()">כניסה</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
 <script>
-// ========== STATE ==========
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbw-5d3Ow66B1XDpl_0guj9eOhL661rDVrLt5d-4TVQqOOeHnSwiGgrhfGiRO_yH_LR66w/exec';
 let posts = [];
 let currentFilter = 'all';
@@ -1449,42 +360,21 @@ let currentSearch = '';
 let editingId = null;
 let currentTags = [];
 let filterTag = null;
-let isSyncing = false;
+let autosaveTimer = null;
+let autosaveChanged = false;
+let windows = {};
+let windowZIndex = 110;
+let windowCount = 0;
+let dragging = null, dragOffX = 0, dragOffY = 0;
 
-const statusLabels = {
-  idea: 'רעיון',
-  draft: 'דראפט',
-  ready: 'מוכן לפרסום',
-  published: 'פורסם',
-  deleted: 'נמחק'
-};
+const statusLabels = { idea:'רעיון', draft:'דראפט', ready:'מוכן לפרסום', published:'פורסם', deleted:'נמחק' };
+const statusEmoji = { idea:'💡', draft:'✏️', ready:'✅', published:'🚀', deleted:'🗑' };
 
-const statusEmoji = {
-  idea: '💡',
-  draft: '✏️',
-  ready: '✅',
-  published: '🚀',
-  deleted: '🗑'
-};
-
-
-// ========== LOGIN ==========
-const PASSWORD_HASH = '7c4f8b9e2a1d6f3c5e8a2b4d7f1c9e3a'; // Yaishps90
-
-function simpleHash(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(16).padStart(8, '0').repeat(4).slice(0, 32);
-}
-
+// ========== AUTH ==========
 function checkLogin() {
   const val = document.getElementById('login-input').value;
   const input = document.getElementById('login-input');
   const err = document.getElementById('login-error');
-
   if (val === 'Yaishps90') {
     localStorage.setItem('ayb_auth', 'ayb_authenticated_2024');
     document.getElementById('login-overlay').style.display = 'none';
@@ -1509,7 +399,6 @@ function checkAuth() {
   return false;
 }
 
-
 // ========== DEVICE TRACKING ==========
 function getDeviceInfo() {
   const ua = navigator.userAgent;
@@ -1525,13 +414,9 @@ function getDeviceInfo() {
 function logDeviceLogin() {
   const devices = JSON.parse(localStorage.getItem('ayb_devices') || '[]');
   const { icon, name } = getDeviceInfo();
-  const now = Date.now();
-  // Remove duplicate from same device
   const filtered = devices.filter(d => d.name !== name);
-  filtered.unshift({ icon, name, time: now });
-  // Keep last 5
-  const trimmed = filtered.slice(0, 5);
-  localStorage.setItem('ayb_devices', JSON.stringify(trimmed));
+  filtered.unshift({ icon, name, time: Date.now() });
+  localStorage.setItem('ayb_devices', JSON.stringify(filtered.slice(0, 5)));
   updateDevicesBadge();
 }
 
@@ -1539,472 +424,41 @@ function updateDevicesBadge() {
   const devices = JSON.parse(localStorage.getItem('ayb_devices') || '[]');
   const badge = document.getElementById('devices-badge');
   const count = document.getElementById('devices-count');
-  if (badge && devices.length > 0) {
-    badge.style.display = 'inline-flex';
-    count.textContent = devices.length;
-  }
+  if (badge && devices.length > 0) { badge.style.display = 'inline-flex'; count.textContent = devices.length; }
 }
 
 function toggleDevices() {
   const modal = document.getElementById('devices-modal');
   const devices = JSON.parse(localStorage.getItem('ayb_devices') || '[]');
-  
   const list = document.getElementById('devices-list');
   list.innerHTML = devices.map(d => {
     const date = new Date(d.time);
-    const timeStr = date.toLocaleDateString('he-IL') + ' ' + date.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
-    return `<div class="device-row">
-      <span class="device-icon">${d.icon}</span>
-      <div class="device-info">
-        <div>${d.name}</div>
-        <div class="device-time">${timeStr}</div>
-      </div>
-    </div>`;
+    const timeStr = date.toLocaleDateString('he-IL') + ' ' + date.toLocaleTimeString('he-IL', {hour:'2-digit',minute:'2-digit'});
+    return `<div class="device-row"><span style="font-size:18px">${d.icon}</span><div style="flex:1"><div>${d.name}</div><div class="device-time">${timeStr}</div></div></div>`;
   }).join('');
-
   modal.classList.toggle('open');
 }
 
-// Close devices modal on outside click
 document.addEventListener('click', (e) => {
   const modal = document.getElementById('devices-modal');
   const badge = document.getElementById('devices-badge');
-  if (modal && badge && !modal.contains(e.target) && !badge.contains(e.target)) {
-    modal.classList.remove('open');
-  }
+  if (modal && badge && !modal.contains(e.target) && !badge.contains(e.target)) modal.classList.remove('open');
 });
-
-
-// ========== AUTOSAVE ==========
-let autosaveTimer = null;
-let autosaveChanged = false;
-
-function startAutosave() {
-  // Clear existing timer
-  if (autosaveTimer) clearInterval(autosaveTimer);
-  autosaveChanged = false;
-
-  // Watch for changes
-  ['field-title', 'field-body', 'field-visual'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', () => { autosaveChanged = true; });
-  });
-  ['field-status', 'field-date'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('change', () => { autosaveChanged = true; });
-  });
-
-  // Autosave every 30 seconds if changed
-  autosaveTimer = setInterval(async () => {
-    if (!autosaveChanged) return;
-    const title = document.getElementById('field-title').value.trim();
-    const body = document.getElementById('field-body').value.trim();
-    if (!title && !body) return;
-
-    setAutosaveStatus('saving');
-    autosaveChanged = false;
-
-    const postData = {
-      id: editingId || Date.now(),
-      title,
-      body,
-      visual: document.getElementById('field-visual').value.trim(),
-      status: document.getElementById('field-status').value,
-      date: document.getElementById('field-date').value,
-      tags: currentTags,
-      created: editingId ? (posts.find(p => p.id === editingId)?.created || Date.now()) : Date.now()
-    };
-
-    if (!editingId) {
-      editingId = postData.id;
-      posts.unshift(postData);
-    } else {
-      const idx = posts.findIndex(p => p.id === editingId);
-      if (idx !== -1) posts[idx] = postData;
-    }
-
-    await savePosts(postData, 'savePost');
-    setAutosaveStatus('saved');
-    render();
-  }, 30000);
-}
-
-function stopAutosave() {
-  if (autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; }
-  setAutosaveStatus('');
-}
-
-function setAutosaveStatus(status) {
-  const el = document.getElementById('autosave-indicator');
-  if (!el) return;
-  if (status === 'saving') { el.textContent = '💾 שומר...'; el.className = 'autosave-indicator saving'; }
-  else if (status === 'saved') { el.textContent = '✓ נשמר אוטומטית'; el.className = 'autosave-indicator saved'; setTimeout(() => { el.textContent = ''; el.className = 'autosave-indicator'; }, 3000); }
-  else { el.textContent = ''; el.className = 'autosave-indicator'; }
-}
-
-
-// ========== IMPORT FROM URL ==========
-async function checkImport() {
-  const params = new URLSearchParams(window.location.search);
-  const raw = params.get('import');
-  if (!raw) return;
-
-  try {
-    const items = JSON.parse(decodeURIComponent(raw));
-    if (!items || !items.length) return;
-
-    setSyncing(true);
-    let count = 0;
-    for (const item of items) {
-      const post = {
-        id: Date.now() + count,
-        created: Date.now() + count,
-        title: item.title || '',
-        body: item.body || '',
-        visual: '',
-        status: 'idea',
-        tags: [],
-        date: ''
-      };
-      posts.unshift(post);
-      await savePosts(post, 'savePost');
-      count++;
-      await new Promise(r => setTimeout(r, 300));
-    }
-    setSyncing(false);
-    render();
-    showToast('🎉 ' + count + ' פוסטים נוספו מקלוד!');
-
-    // Clean URL
-    window.history.replaceState({}, '', window.location.pathname);
-  } catch(e) {
-    setSyncing(false);
-    showToast('⚠️ שגיאה בייבוא');
-  }
-}
-
-
-// ========== MULTI-WINDOW SYSTEM (Desktop) ==========
-let windows = {};
-let windowZIndex = 110;
-let windowCount = 0;
-
-function isDesktop() { return window.innerWidth > 768; }
-
-function openWindow(post = null) {
-  if (!isDesktop()) { openModal(post); return; }
-
-  const winId = 'win_' + (++windowCount);
-  const isNew = !post;
-
-  // Create window element
-  const win = document.createElement('div');
-  win.className = 'post-window active';
-  win.id = winId;
-  win.style.zIndex = ++windowZIndex;
-
-  // Position cascaded
-  const offset = (windowCount % 6) * 30;
-  win.style.top = (80 + offset) + 'px';
-  win.style.right = (20 + offset) + 'px';
-
-  const title = post ? (post.title || 'ללא כותרת') : 'פוסט חדש';
-
-  win.innerHTML = `
-    <div class="post-window-header" onmousedown="startDrag(event, '${winId}')">
-      <span class="post-window-title" id="wtitle_${winId}">${title}</span>
-      <button class="window-action-btn minimize" onclick="toggleMinimize('${winId}')" title="מזער">─</button>
-      <button class="window-action-btn" onclick="closeWindow('${winId}')" title="סגור">×</button>
-    </div>
-    <div class="post-window-body">
-      <div class="form-row">
-        <label class="form-label">נושא / כותרת</label>
-        <input type="text" class="form-input" id="wf_title_${winId}" placeholder="מה הנושא?" value="${post ? (post.title||'') : ''}"
-          oninput="updateWindowTitle('${winId}', this.value); markWindowChanged('${winId}')" />
-      </div>
-      <div class="form-row">
-        <label class="form-label">גוף הפוסט</label>
-        <textarea class="form-textarea" id="wf_body_${winId}" placeholder="כתוב את הפוסט כאן..." style="min-height:160px"
-          oninput="updateCharCountWindow('${winId}'); markWindowChanged('${winId}')">${post ? (post.body||'') : ''}</textarea>
-        <div class="char-counter" id="wchar_${winId}">0 / 3000 תווים</div>
-      </div>
-      <div class="form-row">
-        <label class="form-label">הצעה לויז׳ואל</label>
-        <input type="text" class="form-input" id="wf_visual_${winId}" placeholder="תאר את הויז'ואל..."
-          value="${post ? (post.visual||'') : ''}" oninput="markWindowChanged('${winId}')" />
-      </div>
-      <div class="form-row-2">
-        <div class="form-row" style="margin-bottom:0">
-          <label class="form-label">סטטוס</label>
-          <select class="form-select" id="wf_status_${winId}" onchange="markWindowChanged('${winId}')">
-            <option value="idea" ${post && post.status==='idea' ? 'selected' : ''}>💡 רעיון</option>
-            <option value="draft" ${post && post.status==='draft' ? 'selected' : (!post ? '' : '')}>✏️ דראפט</option>
-            <option value="ready" ${post && post.status==='ready' ? 'selected' : ''}>✅ מוכן לפרסום</option>
-            <option value="published" ${post && post.status==='published' ? 'selected' : ''}>🚀 פורסם</option>
-          </select>
-        </div>
-        <div class="form-row" style="margin-bottom:0">
-          <label class="form-label">תאריך</label>
-          <input type="date" class="form-input" id="wf_date_${winId}" value="${post ? (post.date||'') : ''}"
-            onchange="markWindowChanged('${winId}')" />
-        </div>
-      </div>
-    </div>
-    <div class="post-window-footer">
-      <span class="autosave-indicator" id="wasave_${winId}"></span>
-      <button class="btn-copy" onclick="copyWindowText('${winId}')">📋 העתק</button>
-      <button class="btn-primary" style="flex:1" onclick="saveWindow('${winId}', ${post ? post.id : 'null'}, ${post ? post.created : 'null'})">שמור</button>
-    </div>
-  `;
-
-  document.getElementById('windows-container').appendChild(win);
-
-  // Deactivate other windows
-  activateWindow(winId);
-
-  // Add to taskbar
-  addTaskbarTab(winId, title);
-
-  // Init char counter
-  setTimeout(() => updateCharCountWindow(winId), 50);
-
-  // Start autosave for window
-  startWindowAutosave(winId, post ? post.id : null, post ? post.created : null);
-
-  windows[winId] = { id: post ? post.id : null, created: post ? post.created : null, changed: false, autosaveTimer: null };
-}
-
-function activateWindow(winId) {
-  Object.keys(windows).forEach(id => {
-    const w = document.getElementById(id);
-    if (w) w.classList.remove('active');
-    const tab = document.getElementById('tab_' + id);
-    if (tab) tab.classList.remove('active');
-  });
-  const win = document.getElementById(winId);
-  if (win) { win.classList.add('active'); win.style.zIndex = ++windowZIndex; }
-  const tab = document.getElementById('tab_' + winId);
-  if (tab) tab.classList.add('active');
-}
-
-function closeWindow(winId) {
-  const win = document.getElementById(winId);
-  if (win) win.remove();
-  const tab = document.getElementById('tab_' + winId);
-  if (tab) tab.remove();
-  if (windows[winId] && windows[winId].autosaveTimer) clearInterval(windows[winId].autosaveTimer);
-  delete windows[winId];
-}
-
-function toggleMinimize(winId) {
-  const win = document.getElementById(winId);
-  if (win) win.classList.toggle('minimized');
-}
-
-function updateWindowTitle(winId, val) {
-  const tab = document.getElementById('tab_' + winId);
-  const header = document.getElementById('wtitle_' + winId);
-  const short = val.substring(0, 20) || 'פוסט חדש';
-  if (tab) tab.querySelector('span').textContent = short;
-  if (header) header.textContent = short;
-}
-
-function updateCharCountWindow(winId) {
-  const body = document.getElementById('wf_body_' + winId);
-  const counter = document.getElementById('wchar_' + winId);
-  if (!body || !counter) return;
-  const len = body.value.length;
-  counter.textContent = len + ' / 3000 תווים';
-  counter.className = 'char-counter' + (len > 3000 ? ' over' : len > 2500 ? ' warn' : '');
-}
-
-function markWindowChanged(winId) {
-  if (windows[winId]) windows[winId].changed = true;
-}
-
-function copyWindowText(winId) {
-  const body = document.getElementById('wf_body_' + winId);
-  if (body) navigator.clipboard.writeText(body.value).then(() => showToast('📋 הועתק!'));
-}
-
-async function saveWindow(winId, existingId, existingCreated) {
-  const title = document.getElementById('wf_title_' + winId)?.value.trim() || '';
-  const body = document.getElementById('wf_body_' + winId)?.value.trim() || '';
-  const visual = document.getElementById('wf_visual_' + winId)?.value.trim() || '';
-  const status = document.getElementById('wf_status_' + winId)?.value || 'idea';
-  const date = document.getElementById('wf_date_' + winId)?.value || '';
-
-  if (!title && !body) { showToast('⚠️ הוסף כותרת או תוכן'); return; }
-
-  const postId = existingId || windows[winId]?.id || Date.now();
-  const created = existingCreated || windows[winId]?.created || Date.now();
-
-  const postData = { id: postId, created, title, body, visual, status, tags: [], date };
-
-  const idx = posts.findIndex(p => p.id === postId);
-  if (idx !== -1) posts[idx] = postData;
-  else posts.unshift(postData);
-
-  if (windows[winId]) { windows[winId].id = postId; windows[winId].created = created; windows[winId].changed = false; }
-
-  render();
-  const indicator = document.getElementById('wasave_' + winId);
-  if (indicator) { indicator.textContent = '✅ נשמר'; indicator.className = 'autosave-indicator saved'; setTimeout(() => { indicator.textContent = ''; }, 2000); }
-  showToast('✅ נשמר!');
-  updateWindowTitle(winId, title);
-  // Save to Sheets in background
-  savePosts(postData, 'savePost');
-}
-
-function startWindowAutosave(winId, existingId, existingCreated) {
-  const timer = setInterval(async () => {
-    if (!windows[winId] || !windows[winId].changed) return;
-    const title = document.getElementById('wf_title_' + winId)?.value.trim() || '';
-    const body = document.getElementById('wf_body_' + winId)?.value.trim() || '';
-    if (!title && !body) return;
-    windows[winId].changed = false;
-    const indicator = document.getElementById('wasave_' + winId);
-    if (indicator) { indicator.textContent = '💾 שומר...'; indicator.className = 'autosave-indicator saving'; }
-    await saveWindow(winId, existingId, existingCreated);
-  }, 30000);
-  if (windows[winId]) windows[winId].autosaveTimer = timer;
-}
-
-function addTaskbarTab(winId, title) {
-  const taskbar = document.getElementById('windows-taskbar');
-  const tab = document.createElement('div');
-  tab.className = 'taskbar-tab active';
-  tab.id = 'tab_' + winId;
-  tab.innerHTML = `<span>${title.substring(0,20) || 'פוסט חדש'}</span>`;
-  tab.onclick = () => {
-    const win = document.getElementById(winId);
-    if (win && win.classList.contains('minimized')) win.classList.remove('minimized');
-    activateWindow(winId);
-  };
-  taskbar.insertBefore(tab, taskbar.querySelector('.taskbar-new-btn'));
-}
-
-// Drag logic
-let dragging = null, dragOffX = 0, dragOffY = 0;
-
-function startDrag(e, winId) {
-  activateWindow(winId);
-  dragging = winId;
-  const win = document.getElementById(winId);
-  const rect = win.getBoundingClientRect();
-  dragOffX = e.clientX - rect.left;
-  dragOffY = e.clientY - rect.top;
-  document.addEventListener('mousemove', onDrag);
-  document.addEventListener('mouseup', stopDrag);
-}
-
-function onDrag(e) {
-  if (!dragging) return;
-  const win = document.getElementById(dragging);
-  if (!win) return;
-  const x = window.innerWidth - e.clientX + dragOffX - win.offsetWidth;
-  const y = e.clientY - dragOffY;
-  win.style.right = Math.max(0, x) + 'px';
-  win.style.top = Math.max(0, y) + 'px';
-}
-
-function stopDrag() {
-  dragging = null;
-  document.removeEventListener('mousemove', onDrag);
-  document.removeEventListener('mouseup', stopDrag);
-}
-
-
-// ========== MOBILE TAGS DRAWER ==========
-function openTagsDrawer() {
-  document.getElementById('tags-drawer').classList.add('open');
-  document.getElementById('drawer-overlay').classList.add('open');
-  renderDrawerTags();
-}
-
-function closeTagsDrawer() {
-  document.getElementById('tags-drawer').classList.remove('open');
-  document.getElementById('drawer-overlay').classList.remove('open');
-}
-
-function renderDrawerTags() {
-  const tagCounts = {};
-  posts.filter(p => p.status !== 'deleted').forEach(p => {
-    (p.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
-  });
-
-  const container = document.getElementById('drawer-tags-list');
-  const fab = document.getElementById('fab-count');
-  const tags = Object.entries(tagCounts).sort((a,b) => b[1]-a[1]);
-
-  // Update fab badge
-  if (tags.length > 0) {
-    fab.style.display = 'flex';
-    fab.textContent = tags.length;
-  } else {
-    fab.style.display = 'none';
-  }
-
-  if (tags.length === 0) {
-    container.innerHTML = '<p style="color:var(--text3);font-size:13px">אין תגיות עדיין</p>';
-    return;
-  }
-
-  // All button
-  const allActive = !window.activeTagFilter;
-  container.innerHTML = `
-    <button class="drawer-tag-btn ${allActive ? 'active' : ''}" onclick="filterByTagMobile(null, this)">
-      📁 הכל
-    </button>
-    ${tags.map(([tag, count]) => `
-      <button class="drawer-tag-btn ${window.activeTagFilter === tag ? 'active' : ''}"
-        onclick="filterByTagMobile('${tag}', this)">
-        #${tag} <span class="tag-count">${count}</span>
-      </button>
-    `).join('')}
-  `;
-}
-
-function filterByTagMobile(tag, btn) {
-  window.activeTagFilter = tag;
-  // Sync with sidebar tag filter
-  filterByTag(tag);
-  closeTagsDrawer();
-
-  // Update active state in drawer
-  document.querySelectorAll('.drawer-tag-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-}
-
-// ========== MOBILE STEPS ==========
-function setStep(n) {
-  for (let i = 1; i <= 3; i++) {
-    const el = document.getElementById('step' + i);
-    if (!el) continue;
-    if (i < n) el.className = 'step-dot done';
-    else if (i === n) el.className = 'step-dot active';
-    else el.className = 'step-dot';
-  }
-}
 
 // ========== SYNC ==========
 function setSyncing(val, msg) {
   const el = document.getElementById('sync-indicator');
   if (!el) return;
-  if (val) { el.textContent = '🔄 מסנכרן...'; el.style.color = 'var(--draft)'; }
-  else { el.textContent = msg || '✅ מסונכרן'; el.style.color = 'var(--ready)'; }
+  if (val) el.textContent = '🔄 מסנכרן...';
+  else el.textContent = msg || '✅ מסונכרן';
 }
 
-// ========== INIT ==========
 async function init() {
   setSyncing(true);
   try {
     const res = await fetch(SHEET_URL + '?action=getPosts');
     const data = await res.json();
-    posts = (data.posts || []).map(p => ({
-      ...p, id: Number(p.id), created: Number(p.created),
-      tags: Array.isArray(p.tags) ? p.tags : []
-    }));
+    posts = (data.posts || []).map(p => ({ ...p, id: Number(p.id), created: Number(p.created), tags: Array.isArray(p.tags) ? p.tags : [] }));
     setSyncing(false);
   } catch(e) {
     setSyncing(false, '⚠️ שגיאת חיבור');
@@ -2014,55 +468,75 @@ async function init() {
   render();
 }
 
+async function savePosts(post, action) {
+  try {
+    await fetch(SHEET_URL, { method:'POST', body: JSON.stringify({ action, ...post }) });
+  } catch(e) { showToast('⚠️ שגיאה בשמירה'); }
+}
+
+// ========== IMPORT FROM URL ==========
+async function checkImport() {
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get('import');
+  if (!raw) return;
+  try {
+    const items = JSON.parse(decodeURIComponent(raw));
+    if (!items || !items.length) return;
+    let count = 0;
+    for (const item of items) {
+      const post = { id: Date.now() + count, created: Date.now() + count, title: item.title || '', body: item.body || '', visual: '', status: 'idea', tags: [], date: '' };
+      posts.unshift(post);
+      savePosts(post, 'savePost');
+      count++;
+      await new Promise(r => setTimeout(r, 300));
+    }
+    render();
+    showToast('🎉 ' + count + ' פוסטים נוספו מקלוד!');
+    window.history.replaceState({}, '', window.location.pathname);
+  } catch(e) { showToast('⚠️ שגיאה בייבוא'); }
+}
+
 // ========== RENDER ==========
 function render() {
   updateStats();
   updateSidebarTags();
   renderPosts();
-  // Update mobile tags fab badge
-  if (typeof renderDrawerTags === 'function') {
-    const tagCounts = {};
-    posts.filter(p => p.status !== 'deleted').forEach(p => {
-      (p.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
-    });
-    const count = Object.keys(tagCounts).length;
-    const fab = document.getElementById('fab-count');
-    if (fab) { fab.style.display = count > 0 ? 'flex' : 'none'; fab.textContent = count; }
-  }
+  const tagCounts = {};
+  posts.filter(p => p.status !== 'deleted').forEach(p => (p.tags||[]).forEach(t => { tagCounts[t] = (tagCounts[t]||0)+1; }));
+  const count = Object.keys(tagCounts).length;
+  const fab = document.getElementById('fab-count');
+  if (fab) { fab.style.display = count > 0 ? 'flex' : 'none'; fab.textContent = count; }
 }
 
 function updateStats() {
-  const counts = { idea: 0, draft: 0, ready: 0, published: 0, deleted: 0 };
+  const counts = { idea:0, draft:0, ready:0, published:0, deleted:0 };
   posts.forEach(p => { if (counts[p.status] !== undefined) counts[p.status]++; });
-
   document.getElementById('stat-total').textContent = posts.filter(p => p.status !== 'deleted' && p.status !== 'published').length;
   document.getElementById('stat-ready').textContent = counts.ready;
   document.getElementById('stat-draft').textContent = counts.draft;
   document.getElementById('stat-idea').textContent = counts.idea;
   document.getElementById('stat-published').textContent = counts.published;
-
-  // Auto-purge deleted posts older than 48h
-  const now = Date.now();
-  posts = posts.filter(p => !(p.status === 'deleted' && p.deletedAt && (now - Number(p.deletedAt)) > 172800000));
-
-  document.getElementById('count-all').textContent = posts.filter(p => p.status !== 'deleted' && p.status !== 'published').length;
+  document.getElementById('count-all').textContent = posts.filter(p => p.status !== 'deleted').length;
   document.getElementById('count-idea').textContent = counts.idea;
   document.getElementById('count-draft').textContent = counts.draft;
   document.getElementById('count-ready').textContent = counts.ready;
   document.getElementById('count-published').textContent = counts.published;
-  document.getElementById('count-deleted').textContent = counts.deleted || 0;
+  document.getElementById('count-deleted').textContent = counts.deleted;
+  // Auto-purge deleted after 48h
+  const now = Date.now();
+  posts = posts.filter(p => !(p.status === 'deleted' && p.deletedAt && (now - p.deletedAt) > 48 * 3600 * 1000));
 }
 
 function updateSidebarTags() {
   const allTags = new Set();
-  posts.forEach(p => p.tags.forEach(t => allTags.add(t)));
+  posts.filter(p => p.status !== 'deleted').forEach(p => (p.tags||[]).forEach(t => allTags.add(t)));
   const container = document.getElementById('sidebar-tags');
   container.innerHTML = '';
   allTags.forEach(tag => {
     const chip = document.createElement('button');
     chip.className = 'tag-chip' + (filterTag === tag ? ' active' : '');
     chip.textContent = tag;
-    chip.onclick = () => toggleTagFilter(tag);
+    chip.onclick = () => filterByTag(filterTag === tag ? null : tag);
     container.appendChild(chip);
   });
 }
@@ -2070,123 +544,68 @@ function updateSidebarTags() {
 function renderPosts() {
   let filtered = posts.filter(p => {
     const matchStatus = currentFilter === 'all' ? p.status !== 'deleted' : p.status === currentFilter;
-    const matchTag = !filterTag || p.tags.includes(filterTag);
-    const matchSearch = !currentSearch ||
-      p.title.includes(currentSearch) ||
-      p.body.includes(currentSearch) ||
-      p.tags.some(t => t.includes(currentSearch));
+    const matchTag = !filterTag || (p.tags||[]).includes(filterTag);
+    const matchSearch = !currentSearch || (p.title||'').includes(currentSearch) || (p.body||'').includes(currentSearch) || (p.tags||[]).some(t => t.includes(currentSearch));
     return matchStatus && matchTag && matchSearch;
   });
-
   const sortVal = window.currentSort || 'created_desc';
-  const statusOrder = { idea: 0, draft: 1, ready: 2, published: 3, deleted: 4 };
-  filtered.sort((a, b) => {
+  const statusOrder = { idea:0, draft:1, ready:2, published:3, deleted:4 };
+  filtered.sort((a,b) => {
     switch(sortVal) {
-      case 'created_asc':  return a.created - b.created;
-      case 'updated_desc': return (b.updated || b.created) - (a.updated || a.created);
-      case 'status':       return (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5);
-      case 'length_desc':  return (b.body || '').length - (a.body || '').length;
-      case 'length_asc':   return (a.body || '').length - (b.body || '').length;
-      case 'tag':          return (a.tags?.[0] || 'ת').localeCompare(b.tags?.[0] || 'ת', 'he');
-      default:             return b.created - a.created; // created_desc
+      case 'created_asc': return a.created - b.created;
+      case 'updated_desc': return (b.updated||b.created) - (a.updated||a.created);
+      case 'status': return (statusOrder[a.status]??5) - (statusOrder[b.status]??5);
+      case 'length_desc': return (b.body||'').length - (a.body||'').length;
+      case 'length_asc': return (a.body||'').length - (b.body||'').length;
+      case 'tag': return (a.tags?.[0]||'ת').localeCompare(b.tags?.[0]||'ת','he');
+      default: return b.created - a.created;
     }
   });
-
   const container = document.getElementById('posts-container');
   container.className = currentView === 'grid' ? 'posts-grid' : 'posts-list';
-
   if (filtered.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state" style="grid-column:1/-1">
-        <div class="icon">📭</div>
-        <h3>אין פוסטים כאן עדיין</h3>
-        <p>לחץ על "פוסט חדש" כדי להתחיל</p>
-      </div>`;
+    container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">📭</div><h3>אין פוסטים כאן עדיין</h3><p>לחץ על "פוסט חדש" כדי להתחיל</p></div>`;
     return;
   }
-
   container.innerHTML = filtered.map(post => renderCard(post)).join('');
 }
 
 function renderCard(post) {
-  const badge = `<span class="status-badge badge-${post.status}">${statusEmoji[post.status]} ${statusLabels[post.status]}</span>`;
-  const tags = post.tags.map(t => `<span class="post-tag">${t}</span>`).join('');
+  const badge = `<span class="status-badge badge-${post.status}">${statusEmoji[post.status]||''} ${statusLabels[post.status]||''}</span>`;
+  const tags = (post.tags||[]).map(t => `<span class="post-tag">${t}</span>`).join('');
   const dateStr = post.date ? `📅 ${post.date}` : '';
   const visualHtml = post.visual ? `<div class="post-visual">🎨 ${post.visual}</div>` : '';
-
-  if (currentView === 'list') {
-    return `
-    <div class="post-card post-card-list status-${post.status}" onclick="editPost(${post.id})">
-      <div style="flex:1;min-width:0">
-        <div class="post-title">${post.title || 'ללא כותרת'}</div>
-        <div class="post-body">${post.body}</div>
-      </div>
-      ${badge}
-      <div class="post-date">${dateStr}</div>
-      <div class="post-actions">
-        <button class="action-btn" onclick="event.stopPropagation();copyText(${post.id})">העתק</button>
-        <button class="action-btn danger" onclick="event.stopPropagation();deletePost(${post.id})">🗑</button>
-      </div>
-    </div>`;
-  }
-
+  let actions = `<button class="action-btn" onclick="event.stopPropagation();copyText(${post.id})">📋</button>`;
   if (post.status === 'deleted') {
-    const deletedAt = Number(post.deletedAt) || Date.now();
-    const hoursLeft = Math.max(0, Math.ceil((deletedAt + 172800000 - Date.now()) / 3600000));
-    return `
-    <div class="post-card status-deleted">
-      <div class="post-card-header">
-        <div class="post-title">${post.title || 'ללא כותרת'}</div>
-        ${badge}
-      </div>
-      <div class="trash-timer">⏱ יימחק סופית בעוד ${hoursLeft} שעות</div>
-      <div class="post-body">${post.body || ''}</div>
-      <div class="post-footer">
-        <div class="post-tags">${tags}</div>
-        <div class="post-actions" style="opacity:1">
-          <button class="restore-btn" onclick="event.stopPropagation();restorePost(${post.id})">♻️ שחזר</button>
-        </div>
-      </div>
-    </div>`;
+    const hoursLeft = post.deletedAt ? Math.max(0, Math.ceil((48*3600*1000 - (Date.now() - post.deletedAt)) / 3600000)) : 48;
+    actions = `<span class="trash-timer">${hoursLeft}ש׳</span><button class="restore-btn" onclick="event.stopPropagation();restorePost(${post.id})">♻️ שחזר</button>`;
+  } else {
+    actions += `<button class="action-btn danger" onclick="event.stopPropagation();deletePost(${post.id})">🗑</button>`;
   }
-
-  return `
-  <div class="post-card status-${post.status}" onclick="editPost(${post.id})">
-    <div class="post-card-header">
-      <div class="post-title">${post.title || 'ללא כותרת'}</div>
-      ${badge}
-    </div>
-    <div class="post-body">${post.body || 'אין תוכן עדיין...'}</div>
-    ${visualHtml}
-    <div class="post-footer">
-      <div class="post-tags">${tags}</div>
-      <div class="post-date">${dateStr}</div>
-      <div class="post-actions">
-        <button class="action-btn" onclick="event.stopPropagation();copyText(${post.id})">העתק</button>
-        <button class="action-btn danger" onclick="event.stopPropagation();deletePost(${post.id})">🗑</button>
-      </div>
-    </div>
-  </div>`;
+  if (currentView === 'list') {
+    return `<div class="post-card post-card-list status-${post.status}" onclick="editPost(${post.id})"><div style="flex:1;min-width:0"><div class="post-title">${post.title||'ללא כותרת'}</div><div class="post-body">${post.body||''}</div></div>${badge}<div class="post-date">${dateStr}</div><div class="post-actions" style="opacity:1">${actions}</div></div>`;
+  }
+  return `<div class="post-card status-${post.status}" onclick="editPost(${post.id})"><div class="post-card-header"><div class="post-title">${post.title||'ללא כותרת'}</div>${badge}</div><div class="post-body">${post.body||'אין תוכן עדיין...'}</div>${visualHtml}<div class="post-footer"><div class="post-tags">${tags}</div><div class="post-date">${dateStr}</div><div class="post-actions">${actions}</div></div></div>`;
 }
 
-// ========== MODAL ==========
+// ========== MODAL (mobile) ==========
+function isDesktop() { return window.innerWidth > 768; }
+
 function openModal(post = null) {
   if (isDesktop()) { openWindow(post); return; }
   editingId = post ? post.id : null;
-  currentTags = post ? [...post.tags] : [];
-
+  currentTags = post ? [...(post.tags||[])] : [];
   document.getElementById('modal-title').textContent = post ? 'עריכת פוסט' : 'פוסט חדש';
-  document.getElementById('field-title').value = post ? post.title : '';
-  document.getElementById('field-body').value = post ? post.body : '';
-  document.getElementById('field-visual').value = post ? post.visual : '';
+  document.getElementById('field-title').value = post ? (post.title||'') : '';
+  document.getElementById('field-body').value = post ? (post.body||'') : '';
+  document.getElementById('field-visual').value = post ? (post.visual||'') : '';
   document.getElementById('field-status').value = post ? post.status : 'idea';
-  document.getElementById('field-date').value = post ? post.date : '';
+  document.getElementById('field-date').value = post ? (post.date||'') : '';
   document.getElementById('copy-btn').style.display = post ? 'block' : 'none';
-
   renderTagChips();
   updateCharCount(document.getElementById('field-body'));
   document.getElementById('modal-overlay').classList.add('open');
-  setTimeout(startAutosave, 100);
+  startAutosave();
 }
 
 function closeModal() {
@@ -2196,24 +615,16 @@ function closeModal() {
   currentTags = [];
 }
 
-function handleOverlayClick(e) {
-  if (e.target === document.getElementById('modal-overlay')) closeModal();
-}
+function handleOverlayClick(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+function editPost(id) { const post = posts.find(p => p.id === id); if (post) openModal(post); }
 
-function editPost(id) {
-  const post = posts.find(p => p.id === id);
-  if (post) openModal(post);
-}
-
-async function savePost() {
+function savePost() {
   const title = document.getElementById('field-title').value.trim();
   const body = document.getElementById('field-body').value.trim();
   const visual = document.getElementById('field-visual').value.trim();
   const status = document.getElementById('field-status').value;
   const date = document.getElementById('field-date').value;
-
-  if (!title && !body) { showToast('⚠️ הוסף לפחות כותרת או תוכן'); return; }
-
+  if (!title && !body) { showToast('⚠️ הוסף כותרת או תוכן'); return; }
   let postData;
   if (editingId) {
     const idx = posts.findIndex(p => p.id === editingId);
@@ -2225,59 +636,61 @@ async function savePost() {
     posts.unshift(postData);
     showToast('🎉 פוסט נוסף!');
   }
-
   closeModal();
   render();
-  // Save to Sheets in background
   savePosts(postData, 'savePost');
 }
 
-async function deletePost(id) {
+function deletePost(id) {
   if (!confirm('להעביר לסל המחזור? יימחק סופית תוך 48 שעות.')) return;
   const idx = posts.findIndex(p => p.id === id);
-  if (idx !== -1) {
-    posts[idx].status = 'deleted';
-    posts[idx].deletedAt = Date.now();
-    setSyncing(true);
-    await savePosts(posts[idx], 'savePost');
-    setSyncing(false);
-  }
+  if (idx !== -1) { posts[idx].status = 'deleted'; posts[idx].deletedAt = Date.now(); savePosts(posts[idx], 'savePost'); }
   render();
-  showToast('🗑 הועבר לנמחקו לאחרונה');
+  showToast('🗑 הועבר לסל המחזור');
 }
 
-async function restorePost(id) {
+function restorePost(id) {
   const idx = posts.findIndex(p => p.id === id);
-  if (idx !== -1) {
-    posts[idx].status = 'idea';
-    delete posts[idx].deletedAt;
-    setSyncing(true);
-    await savePosts(posts[idx], 'savePost');
-    setSyncing(false);
-  }
+  if (idx !== -1) { posts[idx].status = 'idea'; delete posts[idx].deletedAt; savePosts(posts[idx], 'savePost'); }
   render();
-  showToast('♻️ הפוסט שוחזר!');
+  showToast('♻️ הפוסט שוחזר');
 }
 
-async function hardDeletePost(id) {
-  if (!confirm('למחוק סופית?')) return;
-  posts = posts.filter(p => p.id !== id);
-  setSyncing(true);
-  await savePosts({ id }, 'deletePost');
-  setSyncing(false);
-  render();
-  showToast('🗑 נמחק סופית');
+// ========== AUTOSAVE (mobile) ==========
+function startAutosave() {
+  if (autosaveTimer) clearInterval(autosaveTimer);
+  autosaveChanged = false;
+  ['field-title','field-body','field-visual'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', () => { autosaveChanged = true; }); });
+  autosaveTimer = setInterval(async () => {
+    if (!autosaveChanged) return;
+    const title = document.getElementById('field-title').value.trim();
+    const body = document.getElementById('field-body').value.trim();
+    if (!title && !body) return;
+    setAutosaveStatus('saving'); autosaveChanged = false;
+    const postData = { id: editingId || Date.now(), title, body, visual: document.getElementById('field-visual').value.trim(), status: document.getElementById('field-status').value, date: document.getElementById('field-date').value, tags: currentTags, created: editingId ? (posts.find(p=>p.id===editingId)?.created||Date.now()) : Date.now() };
+    if (!editingId) { editingId = postData.id; posts.unshift(postData); }
+    else { const idx = posts.findIndex(p=>p.id===editingId); if (idx!==-1) posts[idx] = postData; }
+    savePosts(postData, 'savePost');
+    setAutosaveStatus('saved'); render();
+  }, 30000);
+}
+
+function stopAutosave() { if (autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; } setAutosaveStatus(''); }
+
+function setAutosaveStatus(status) {
+  const el = document.getElementById('autosave-indicator');
+  if (!el) return;
+  if (status === 'saving') { el.textContent = '💾 שומר...'; el.className = 'autosave-indicator saving'; }
+  else if (status === 'saved') { el.textContent = '✓ נשמר'; el.className = 'autosave-indicator saved'; setTimeout(() => { el.textContent = ''; el.className = 'autosave-indicator'; }, 3000); }
+  else { el.textContent = ''; el.className = 'autosave-indicator'; }
 }
 
 // ========== TAGS ==========
 function handleTagInput(e) {
   if (e.key === 'Enter' || e.key === ',') {
     e.preventDefault();
-    const val = e.target.value.trim().replace(',', '');
-    if (val && !currentTags.includes(val)) {
-      currentTags.push(val);
-      renderTagChips();
-    }
+    const val = e.target.value.trim().replace(',','');
+    if (val && !currentTags.includes(val)) { currentTags.push(val); renderTagChips(); }
     e.target.value = '';
   }
 }
@@ -2286,7 +699,7 @@ function renderTagChips() {
   const area = document.getElementById('tags-input-area');
   const input = document.getElementById('tag-input');
   area.innerHTML = '';
-  currentTags.forEach((tag, i) => {
+  currentTags.forEach((tag,i) => {
     const chip = document.createElement('span');
     chip.className = 'tag-input-chip';
     chip.innerHTML = `${tag}<button onclick="removeTag(${i})">×</button>`;
@@ -2295,122 +708,202 @@ function renderTagChips() {
   area.appendChild(input);
 }
 
-function removeTag(i) {
-  currentTags.splice(i, 1);
-  renderTagChips();
-}
+function removeTag(i) { currentTags.splice(i,1); renderTagChips(); }
 
 // ========== FILTERS ==========
 function filterStatus(status, btn) {
-  currentFilter = status;
-  filterTag = null;
+  currentFilter = status; filterTag = null;
   document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
-  const titles = { all: 'כל הפוסטים', idea: 'רעיונות', draft: 'דראפטים', ready: 'מוכנים לפרסום', published: 'פורסמו' };
+  const titles = { all:'כל הפוסטים', idea:'רעיונות', draft:'דראפטים', ready:'מוכנים לפרסום', published:'פורסמו', deleted:'נמחקו לאחרונה' };
   document.getElementById('section-title').textContent = titles[status];
-  renderPosts();
-  updateSidebarTags();
+  renderPosts(); updateSidebarTags();
 }
 
-function toggleTagFilter(tag) {
-  filterTag = filterTag === tag ? null : tag;
-  updateSidebarTags();
-  renderPosts();
-}
-
-function searchPosts(val) {
-  currentSearch = val;
-  renderPosts();
-}
-
-function setView(view, btn) {
-  currentView = view;
-  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderPosts();
-}
-
-// ========== UTILS ==========
-function copyText(id) {
-  const post = posts.find(p => p.id === id);
-  if (!post) return;
-  navigator.clipboard.writeText(post.body || '').then(() => showToast('📋 הטקסט הועתק!'));
-}
-
-function copyPostText() {
-  const body = document.getElementById('field-body').value;
-  navigator.clipboard.writeText(body).then(() => showToast('📋 הועתק ללוח!'));
-}
-
-function updateCharCount(el) {
-  const len = el.value.length;
-  const counter = document.getElementById('char-counter');
-  counter.textContent = `${len} / 3000 תווים`;
-  counter.className = 'char-counter' + (len > 3000 ? ' over' : len > 2500 ? ' warn' : '');
-}
-
-async function savePosts(post, action) {
-  try {
-    await fetch(SHEET_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action, ...post })
-    });
-  } catch(e) {
-    showToast('⚠️ שגיאה בשמירה');
-  }
-}
+function filterByTag(tag) { filterTag = tag; updateSidebarTags(); renderPosts(); }
+function searchPosts(val) { currentSearch = val; renderPosts(); }
+function setView(view, btn) { currentView = view; document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderPosts(); }
+function setSort(val) { window.currentSort = val; renderPosts(); }
+function copyText(id) { const post = posts.find(p => p.id === id); if (post) navigator.clipboard.writeText(post.body||'').then(() => showToast('📋 הועתק!')); }
+function copyPostText() { navigator.clipboard.writeText(document.getElementById('field-body').value).then(() => showToast('📋 הועתק!')); }
+function updateCharCount(el) { const len = el.value.length; const c = document.getElementById('char-counter'); if(c){c.textContent=len+' / 3000 תווים'; c.className='char-counter'+(len>3000?' over':len>2500?' warn':'');} }
 
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+// ========== MOBILE TAGS DRAWER ==========
+function openTagsDrawer() {
+  document.getElementById('tags-drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  const tagCounts = {};
+  posts.filter(p=>p.status!=='deleted').forEach(p => (p.tags||[]).forEach(t => { tagCounts[t]=(tagCounts[t]||0)+1; }));
+  const tags = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]);
+  const container = document.getElementById('drawer-tags-list');
+  if (tags.length === 0) { container.innerHTML = '<p style="color:var(--text3);font-size:13px">אין תגיות עדיין</p>'; return; }
+  container.innerHTML = `<button class="drawer-tag-btn ${!filterTag?'active':''}" onclick="filterByTagMobile(null,this)">📁 הכל</button>` +
+    tags.map(([tag,count]) => `<button class="drawer-tag-btn ${filterTag===tag?'active':''}" onclick="filterByTagMobile('${tag}',this)">#${tag} <span style="opacity:0.7;font-size:11px">${count}</span></button>`).join('');
+}
+
+function closeTagsDrawer() { document.getElementById('tags-drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); }
+function filterByTagMobile(tag, btn) { window.activeTagFilter = tag; filterByTag(tag); closeTagsDrawer(); }
+
+// ========== MULTI-WINDOW (desktop) ==========
+function openWindow(post = null) {
+  if (!isDesktop()) { openModal(post); return; }
+  const winId = 'win_' + (++windowCount);
+  const win = document.createElement('div');
+  win.className = 'post-window active';
+  win.id = winId;
+  win.style.zIndex = ++windowZIndex;
+  const offset = (windowCount % 6) * 30;
+  win.style.top = (80 + offset) + 'px';
+  win.style.right = (20 + offset) + 'px';
+  const title = post ? (post.title||'ללא כותרת') : 'פוסט חדש';
+  win.innerHTML = `
+    <div class="post-window-header" onmousedown="startDrag(event,'${winId}')">
+      <span class="post-window-title" id="wtitle_${winId}">${title}</span>
+      <button class="window-action-btn minimize" onclick="toggleMinimize('${winId}')" title="מזער">─</button>
+      <button class="window-action-btn" onclick="closeWindow('${winId}')" title="סגור">×</button>
+    </div>
+    <div class="post-window-body">
+      <div class="form-row"><label class="form-label">נושא / כותרת</label><input type="text" class="form-input" id="wf_title_${winId}" placeholder="מה הנושא?" value="${post?(post.title||''):''}" oninput="updateWindowTitle('${winId}',this.value);markWindowChanged('${winId}')" /></div>
+      <div class="form-row"><label class="form-label">גוף הפוסט</label><textarea class="form-textarea" id="wf_body_${winId}" style="min-height:160px" oninput="updateCharCountWindow('${winId}');markWindowChanged('${winId}')">${post?(post.body||''):''}</textarea><div class="char-counter" id="wchar_${winId}">0 / 3000 תווים</div></div>
+      <div class="form-row"><label class="form-label">הצעה לויז׳ואל</label><input type="text" class="form-input" id="wf_visual_${winId}" placeholder="תאר את הויז'ואל..." value="${post?(post.visual||''):''}" oninput="markWindowChanged('${winId}')" /></div>
+      <div class="form-row-2">
+        <div class="form-row" style="margin-bottom:0"><label class="form-label">סטטוס</label><select class="form-select" id="wf_status_${winId}" onchange="markWindowChanged('${winId}')">
+          <option value="idea" ${post&&post.status==='idea'?'selected':(!post?'selected':'')}>💡 רעיון</option>
+          <option value="draft" ${post&&post.status==='draft'?'selected':''}>✏️ דראפט</option>
+          <option value="ready" ${post&&post.status==='ready'?'selected':''}>✅ מוכן לפרסום</option>
+          <option value="published" ${post&&post.status==='published'?'selected':''}>🚀 פורסם</option>
+        </select></div>
+        <div class="form-row" style="margin-bottom:0"><label class="form-label">תאריך</label><input type="date" class="form-input" id="wf_date_${winId}" value="${post?(post.date||''):''}" onchange="markWindowChanged('${winId}')" /></div>
+      </div>
+    </div>
+    <div class="post-window-footer">
+      <span class="autosave-indicator" id="wasave_${winId}"></span>
+      <button class="btn-copy" onclick="copyWindowText('${winId}')">📋 העתק</button>
+      <button class="btn-primary" style="flex:1" onclick="saveWindow('${winId}',${post?post.id:'null'},${post?post.created:'null'})">שמור</button>
+    </div>`;
+  document.getElementById('windows-container').appendChild(win);
+  activateWindow(winId);
+  addTaskbarTab(winId, title);
+  setTimeout(() => updateCharCountWindow(winId), 50);
+  startWindowAutosave(winId, post ? post.id : null, post ? post.created : null);
+  windows[winId] = { id: post ? post.id : null, created: post ? post.created : null, changed: false, autosaveTimer: null };
+}
+
+function activateWindow(winId) {
+  Object.keys(windows).forEach(id => {
+    const w = document.getElementById(id); if (w) w.classList.remove('active');
+    const tab = document.getElementById('tab_'+id); if (tab) tab.classList.remove('active');
+  });
+  const win = document.getElementById(winId); if (win) { win.classList.add('active'); win.style.zIndex = ++windowZIndex; }
+  const tab = document.getElementById('tab_'+winId); if (tab) tab.classList.add('active');
+}
+
+function closeWindow(winId) {
+  const win = document.getElementById(winId); if (win) win.remove();
+  const tab = document.getElementById('tab_'+winId); if (tab) tab.remove();
+  if (windows[winId]?.autosaveTimer) clearInterval(windows[winId].autosaveTimer);
+  delete windows[winId];
+}
+
+function toggleMinimize(winId) { const win = document.getElementById(winId); if (win) win.classList.toggle('minimized'); }
+
+function updateWindowTitle(winId, val) {
+  const tab = document.getElementById('tab_'+winId);
+  const header = document.getElementById('wtitle_'+winId);
+  const short = val.substring(0,20) || 'פוסט חדש';
+  if (tab) tab.querySelector('span').textContent = short;
+  if (header) header.textContent = short;
+}
+
+function updateCharCountWindow(winId) {
+  const body = document.getElementById('wf_body_'+winId);
+  const counter = document.getElementById('wchar_'+winId);
+  if (!body || !counter) return;
+  const len = body.value.length;
+  counter.textContent = len + ' / 3000 תווים';
+  counter.className = 'char-counter' + (len>3000?' over':len>2500?' warn':'');
+}
+
+function markWindowChanged(winId) { if (windows[winId]) windows[winId].changed = true; }
+function copyWindowText(winId) { const body = document.getElementById('wf_body_'+winId); if (body) navigator.clipboard.writeText(body.value).then(() => showToast('📋 הועתק!')); }
+
+function saveWindow(winId, existingId, existingCreated) {
+  const title = document.getElementById('wf_title_'+winId)?.value.trim()||'';
+  const body = document.getElementById('wf_body_'+winId)?.value.trim()||'';
+  const visual = document.getElementById('wf_visual_'+winId)?.value.trim()||'';
+  const status = document.getElementById('wf_status_'+winId)?.value||'idea';
+  const date = document.getElementById('wf_date_'+winId)?.value||'';
+  if (!title && !body) { showToast('⚠️ הוסף כותרת או תוכן'); return; }
+  const postId = existingId || windows[winId]?.id || Date.now();
+  const created = existingCreated || windows[winId]?.created || Date.now();
+  const postData = { id:postId, created, title, body, visual, status, tags:[], date, updated:Date.now() };
+  const idx = posts.findIndex(p => p.id === postId);
+  if (idx !== -1) posts[idx] = postData; else posts.unshift(postData);
+  if (windows[winId]) { windows[winId].id = postId; windows[winId].created = created; windows[winId].changed = false; }
+  render();
+  const indicator = document.getElementById('wasave_'+winId);
+  if (indicator) { indicator.textContent = '✅ נשמר'; indicator.className = 'autosave-indicator saved'; setTimeout(() => { indicator.textContent = ''; }, 2000); }
+  showToast('✅ נשמר!');
+  updateWindowTitle(winId, title);
+  savePosts(postData, 'savePost');
+}
+
+function startWindowAutosave(winId, existingId, existingCreated) {
+  const timer = setInterval(() => {
+    if (!windows[winId] || !windows[winId].changed) return;
+    windows[winId].changed = false;
+    saveWindow(winId, existingId, existingCreated);
+  }, 30000);
+  if (windows[winId]) windows[winId].autosaveTimer = timer;
+}
+
+function addTaskbarTab(winId, title) {
+  const taskbar = document.getElementById('windows-taskbar');
+  const tab = document.createElement('div');
+  tab.className = 'taskbar-tab active';
+  tab.id = 'tab_'+winId;
+  tab.innerHTML = `<span>${title.substring(0,20)||'פוסט חדש'}</span>`;
+  tab.onclick = () => {
+    const win = document.getElementById(winId);
+    if (win && win.classList.contains('minimized')) win.classList.remove('minimized');
+    activateWindow(winId);
+  };
+  taskbar.insertBefore(tab, taskbar.querySelector('.taskbar-new-btn'));
+}
+
+// ========== DRAG ==========
+function startDrag(e, winId) {
+  activateWindow(winId); dragging = winId;
+  const win = document.getElementById(winId);
+  const rect = win.getBoundingClientRect();
+  dragOffX = e.clientX - rect.left; dragOffY = e.clientY - rect.top;
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', stopDrag);
+}
+
+function onDrag(e) {
+  if (!dragging) return;
+  const win = document.getElementById(dragging); if (!win) return;
+  const x = window.innerWidth - e.clientX + dragOffX - win.offsetWidth;
+  const y = e.clientY - dragOffY;
+  win.style.right = Math.max(0,x)+'px'; win.style.top = Math.max(0,y)+'px';
+}
+
+function stopDrag() { dragging = null; document.removeEventListener('mousemove', onDrag); document.removeEventListener('mouseup', stopDrag); }
+
 // ========== START ==========
 if (!checkAuth()) {
-  // Show login, init() called after successful login
+  // wait for login
 } else {
   init().then(checkImport);
 }
 </script>
-
-<!-- Login -->
-<div class="login-overlay" id="login-overlay">
-  <div class="login-box">
-    <div class="login-logo">📋</div>
-    <div class="login-title">פוסט מנג׳ר</div>
-    <div class="login-sub">אסף יעיש ביטון · LinkedIn</div>
-    <input type="password" class="login-input" id="login-input"
-      placeholder="••••••••"
-      onkeydown="if(event.key==='Enter') checkLogin()"
-      autocomplete="current-password" />
-    <button class="login-btn" onclick="checkLogin()">כניסה</button>
-    <div class="login-error" id="login-error"></div>
-  </div>
-</div>
-
-
-<div class="devices-modal" id="devices-modal">
-  <h4>📱 כניסות אחרונות</h4>
-  <div id="devices-list"></div>
-</div>
-
-
-<!-- Mobile Tags Drawer -->
-<div class="drawer-overlay" id="drawer-overlay" onclick="closeTagsDrawer()"></div>
-
-<div class="mobile-tags-drawer" id="tags-drawer">
-  <div class="drawer-handle"></div>
-  <div class="drawer-title">🏷️ סינון לפי תגית</div>
-  <div class="drawer-tags-grid" id="drawer-tags-list"></div>
-</div>
-
-<button class="mobile-tags-fab" id="tags-fab" onclick="openTagsDrawer()">
-  🏷️
-  <span class="fab-count" id="fab-count" style="display:none">0</span>
-</button>
-
 </body>
 </html>
