@@ -521,7 +521,13 @@ async function init() {
   try {
     const res = await fetch(SHEET_URL + '?action=getPosts');
     const data = await res.json();
-    const remote = (data.posts || []).map(p => ({ ...p, id: Number(p.id), created: Number(p.created), tags: Array.isArray(p.tags) ? p.tags : [] }));
+    const remote = (data.posts || []).map(p => {
+      let tags = p.tags;
+      if (!tags || tags === '') tags = [];
+      else if (typeof tags === 'string') tags = tags.split(',').map(t => t.trim()).filter(Boolean);
+      else if (!Array.isArray(tags)) tags = [];
+      return { ...p, id: Number(p.id), created: Number(p.created), tags };
+    });
     // Merge: remote wins for existing, keep local-only posts that aren't on remote yet
     const remoteIds = new Set(remote.map(p => p.id));
     const localOnly = posts.filter(p => !remoteIds.has(p.id));
@@ -589,7 +595,13 @@ setInterval(async () => {
   try {
     const res = await fetch(SHEET_URL + '?action=getPosts&t=' + Date.now());
     const data = await res.json();
-    const remote = (data.posts || []).map(p => ({ ...p, id: Number(p.id), created: Number(p.created), tags: Array.isArray(p.tags) ? p.tags : [] }));
+    const remote = (data.posts || []).map(p => {
+      let tags = p.tags;
+      if (!tags || tags === '') tags = [];
+      else if (typeof tags === 'string') tags = tags.split(',').map(t => t.trim()).filter(Boolean);
+      else if (!Array.isArray(tags)) tags = [];
+      return { ...p, id: Number(p.id), created: Number(p.created), tags };
+    });
     const remoteIds = new Set(remote.map(p => p.id));
     const localOnly = posts.filter(p => !remoteIds.has(p.id));
     // Merge: if local version is newer (updated timestamp), prefer local
@@ -807,10 +819,10 @@ function openModal(post = null, contextStatus = null, contextTag = null) {
   document.getElementById('field-date').value = post ? (post.date||'') : '';
   document.getElementById('copy-btn').style.display = post ? 'block' : 'none';
   renderTagChips();
-  setTimeout(() => onTagInput('', 'modal'), 100);
   updateCharCount(document.getElementById('field-body'));
   document.getElementById('modal-overlay').classList.add('open');
   startAutosave();
+  setTimeout(() => onTagInput('', 'modal'), 150);
 }
 
 function closeModal() {
@@ -1273,7 +1285,7 @@ function renderWindowTags(winId) {
     area.appendChild(chip);
   });
   area.appendChild(input);
-  renderTagSuggestions('tag-suggestions-'+winId, tags);
+  onTagInput('', winId);
 }
 
 function handleWindowTagInput(e, winId) {
@@ -1335,19 +1347,6 @@ if (!checkAuth()) {
   // wait for login
 } else {
   init().then(checkImport).then(() => setTimeout(restoreDraftIfExists, 500));
-}
-</script>
-<div id="debug-output" style="position:fixed;bottom:0;right:0;background:#111;color:#0f0;font-size:11px;padding:8px;z-index:9999;max-width:300px;max-height:200px;overflow:auto;display:none;border-top-left-radius:8px;"></div>
-<button onclick="runDebug()" style="position:fixed;bottom:0;right:0;background:red;color:white;z-index:10000;padding:6px 10px;font-size:12px;border:none;cursor:pointer;">DEBUG</button>
-<script>
-function runDebug() {
-  const out = document.getElementById('debug-output');
-  out.style.display = 'block';
-  const tags = getAllExistingTags();
-  const postsInfo = posts.slice(0,3).map(p => ({id:p.id, tagsType: typeof p.tags, tags: p.tags}));
-  out.innerHTML = '<b>posts count:</b> ' + posts.length + '<br>' +
-    '<b>tags found:</b> ' + JSON.stringify(tags) + '<br>' +
-    '<b>sample posts:</b> ' + JSON.stringify(postsInfo);
 }
 </script>
 </body>
