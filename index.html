@@ -244,6 +244,12 @@
     .modal-footer button { flex:1; padding:13px; font-size:14px; }
     .autosave-indicator { display:none; }
 
+    /* Tag suggestions */
+    .tag-suggestions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .tag-suggest-chip { padding:5px 12px; border-radius:20px; background:var(--surface3); border:1px solid var(--border); color:var(--text3); font-size:12px; font-weight:500; cursor:pointer; font-family:'Heebo',sans-serif; transition:all 0.15s; }
+    .tag-suggest-chip:hover { border-color:var(--accent); color:var(--accent); background:rgba(108,99,255,0.08); }
+    .tag-suggest-chip.used { opacity:0.3; cursor:default; }
+
     /* Tags drawer */
     .mobile-tags-fab { position:fixed; bottom:20px; left:16px; width:46px; height:46px; border-radius:50%; background:var(--surface2); border:1px solid var(--border); color:var(--text2); font-size:18px; display:flex !important; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(0,0,0,0.4); cursor:pointer; z-index:80; }
     .fab-count { position:absolute; top:-4px; right:-4px; background:var(--accent); color:#fff; font-size:10px; font-weight:700; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
@@ -341,7 +347,13 @@
         <div class="form-row" style="margin-bottom:0"><label class="form-label">סטטוס</label><select class="form-select" id="field-status"><option value="idea">💡 רעיון</option><option value="draft">✏️ דראפט</option><option value="ready">✅ מוכן לפרסום</option><option value="published">🚀 פורסם</option></select></div>
         <div class="form-row" style="margin-bottom:0"><label class="form-label">תאריך</label><input type="date" class="form-input" id="field-date" /></div>
       </div>
-      <div class="form-row" style="margin-top:16px"><label class="form-label">תגיות</label><div class="tags-input-area" id="tags-input-area" onclick="document.getElementById('tag-input').focus()"><input type="text" class="tags-input" id="tag-input" placeholder="הוסף תגית ולחץ Enter..." onkeydown="handleTagInput(event)" /></div></div>
+      <div class="form-row" style="margin-top:16px">
+        <label class="form-label">תגיות</label>
+        <div class="tags-input-area" id="tags-input-area" onclick="document.getElementById('tag-input').focus()">
+          <input type="text" class="tags-input" id="tag-input" placeholder="הוסף תגית ולחץ Enter..." onkeydown="handleTagInput(event)" oninput="filterTagSuggestions(this.value,'modal')" />
+        </div>
+        <div class="tag-suggestions" id="modal-tag-suggestions"></div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal()">ביטול</button>
@@ -510,7 +522,15 @@ async function init() {
     // Merge: remote wins for existing, keep local-only posts that aren't on remote yet
     const remoteIds = new Set(remote.map(p => p.id));
     const localOnly = posts.filter(p => !remoteIds.has(p.id));
-    posts = [...remote, ...localOnly];
+    // Merge: if local version is newer (updated timestamp), prefer local
+    const merged = remote.map(remotePost => {
+      const localPost = posts.find(p => p.id === remotePost.id);
+      if (localPost && (localPost.updated || 0) > (remotePost.updated || 0)) {
+        return localPost; // local is newer — keep local (handles offline edits/deletes)
+      }
+      return remotePost;
+    });
+    posts = [...merged, ...localOnly];
     saveLocalCache();
     setSyncing(false, '✅ מסונכרן');
     render();
@@ -569,7 +589,15 @@ setInterval(async () => {
     const remote = (data.posts || []).map(p => ({ ...p, id: Number(p.id), created: Number(p.created), tags: Array.isArray(p.tags) ? p.tags : [] }));
     const remoteIds = new Set(remote.map(p => p.id));
     const localOnly = posts.filter(p => !remoteIds.has(p.id));
-    posts = [...remote, ...localOnly];
+    // Merge: if local version is newer (updated timestamp), prefer local
+    const merged = remote.map(remotePost => {
+      const localPost = posts.find(p => p.id === remotePost.id);
+      if (localPost && (localPost.updated || 0) > (remotePost.updated || 0)) {
+        return localPost; // local is newer — keep local (handles offline edits/deletes)
+      }
+      return remotePost;
+    });
+    posts = [...merged, ...localOnly];
     saveLocalCache();
     render();
     setSyncing(false, '✅ מסונכרן');
@@ -1003,8 +1031,9 @@ function openWindow(post = null, contextStatus = null, contextTag = null) {
       <div class="form-row" style="margin-top:12px">
         <label class="form-label">תגיות</label>
         <div class="tags-input-area window-tags-area" id="wf_tags_area_${winId}" onclick="document.getElementById('wf_tag_input_${winId}').focus()">
-          <input type="text" class="tags-input" id="wf_tag_input_${winId}" placeholder="הוסף תגית + Enter..." onkeydown="handleWindowTagInput(event,'${winId}')" />
+          <input type="text" class="tags-input" id="wf_tag_input_${winId}" placeholder="הוסף תגית + Enter..." onkeydown="handleWindowTagInput(event,'${winId}')" oninput="filterTagSuggestions(this.value,'${winId}')" />
         </div>
+        <div class="tag-suggestions" id="tag-suggestions-${winId}"></div>
       </div>
     </div>
     <div class="post-window-footer">
@@ -1172,6 +1201,59 @@ function dropToTag(tag) {
   }
 }
 
+// ========== TAG SUGGESTIONS ==========
+function getAllExistingTags() {
+  const all = new Set();
+  posts.filter(p => p.status !== 'deleted').forEach(p => (p.tags||[]).forEach(t => all.add(t)));
+  return [...all].sort();
+}
+
+function renderTagSuggestions(containerId, activeTags) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const all = getAllExistingTags();
+  const unused = all.filter(t => !activeTags.includes(t));
+  if (unused.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = unused.map(tag =>
+    `<button class="tag-suggest-chip" onclick="addSuggestedTag('${tag}','${containerId}')">#${tag}</button>`
+  ).join('');
+}
+
+function filterTagSuggestions(query, context) {
+  const containerId = context === 'modal' ? 'modal-tag-suggestions' : 'tag-suggestions-' + context;
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const activeTags = context === 'modal' ? currentTags : (windows[context]?.tagsList || []);
+  const all = getAllExistingTags();
+  const filtered = query
+    ? all.filter(t => t.includes(query) && !activeTags.includes(t))
+    : all.filter(t => !activeTags.includes(t));
+  if (filtered.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = filtered.map(tag =>
+    `<button class="tag-suggest-chip" onclick="addSuggestedTag('${tag}','${containerId}','${context}')">#${tag}</button>`
+  ).join('');
+}
+
+function addSuggestedTag(tag, containerId, context) {
+  if (context === 'modal' || !context) {
+    if (!currentTags.includes(tag)) { currentTags.push(tag); renderTagChips(); }
+    renderTagSuggestions(containerId, currentTags);
+    const input = document.getElementById('tag-input');
+    if (input) { input.value = ''; input.focus(); }
+  } else {
+    if (!windows[context]) return;
+    if (!windows[context].tagsList) windows[context].tagsList = [];
+    if (!windows[context].tagsList.includes(tag)) {
+      windows[context].tagsList.push(tag);
+      renderWindowTags(context);
+      markWindowChanged(context);
+    }
+    renderTagSuggestions(containerId, windows[context].tagsList);
+    const input = document.getElementById('wf_tag_input_' + context);
+    if (input) { input.value = ''; input.focus(); }
+  }
+}
+
 // ========== WINDOW TAGS ==========
 function renderWindowTags(winId) {
   const area = document.getElementById('wf_tags_area_'+winId);
@@ -1186,6 +1268,7 @@ function renderWindowTags(winId) {
     area.appendChild(chip);
   });
   area.appendChild(input);
+  renderTagSuggestions('tag-suggestions-'+winId, tags);
 }
 
 function handleWindowTagInput(e, winId) {
