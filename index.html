@@ -1054,7 +1054,7 @@ function openWindow(post = null, contextStatus = null, contextTag = null) {
       <div class="form-row" style="margin-top:12px">
         <label class="form-label">תגיות</label>
         <div class="tags-input-area window-tags-area" id="wf_tags_area_${winId}" onclick="document.getElementById('wf_tag_input_${winId}').focus()">
-          <input type="text" class="tags-input" id="wf_tag_input_${winId}" placeholder="הוסף תגית + Enter..." onkeydown="handleWindowTagInput(event,'${winId}')" oninput="onTagInput(this.value,'${winId}')" onfocus="onTagInput('','${winId}')" />
+          <input type="text" class="tags-input" id="wf_tag_input_${winId}" placeholder="הוסף תגית + Enter..." onkeydown="handleWindowTagInput(event,'${winId}')" oninput="onTagInput(this.value,'${winId}')" onfocus="setTimeout(()=>onTagInput('','${winId}'),50)" />
         </div>
         <div id="tag-suggestions-${winId}" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
       </div>
@@ -1081,8 +1081,11 @@ function openWindow(post = null, contextStatus = null, contextTag = null) {
   // Render initial tags + suggestions
   setTimeout(() => {
     renderWindowTags(winId);
-    onTagInput('', String(winId));
-  }, 300);
+    const suggDiv = document.getElementById('tag-suggestions-' + winId);
+    if (suggDiv) {
+      onTagInput('', winId);
+    }
+  }, 500);
 }
 
 function activateWindow(winId) {
