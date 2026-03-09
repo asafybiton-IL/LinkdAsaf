@@ -1226,17 +1226,17 @@ function onTagInput(query, context) {
   if (!container) return;
   const activeTags = isModal ? currentTags : (windows[context]?.tagsList || []);
   const all = getAllExistingTags();
-  const filtered = query.trim()
-    ? all.filter(t => t.includes(query.trim()))
-    : all;
-  if (filtered.length === 0) {
-    container.innerHTML = '';
-    return;
-  }
-  container.innerHTML = filtered.map(tag => {
+  const q = (query||'').trim();
+  const filtered = q ? all.filter(t => t.includes(q)) : all;
+  container.innerHTML = '';
+  filtered.forEach(tag => {
     const isUsed = activeTags.includes(tag);
-    return `<button style="padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;cursor:${isUsed?'default':'pointer'};border:1.5px solid ${isUsed?'var(--accent)':'var(--border)'};background:${isUsed?'rgba(108,99,255,0.15)':'var(--surface3)'};color:${isUsed?'var(--accent)':'var(--text3)'};font-family:Heebo,sans-serif;transition:all 0.15s;" ${isUsed?'':'onclick="pickTag(''+tag+'',''+context+'')"'}>#${tag}</button>`;
-  }).join('');
+    const btn = document.createElement('button');
+    btn.textContent = '#' + tag;
+    btn.style.cssText = 'padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;font-family:Heebo,sans-serif;transition:all 0.15s;cursor:' + (isUsed ? 'default' : 'pointer') + ';border:1.5px solid ' + (isUsed ? 'var(--accent)' : 'var(--border)') + ';background:' + (isUsed ? 'rgba(108,99,255,0.15)' : 'var(--surface3)') + ';color:' + (isUsed ? 'var(--accent)' : 'var(--text3)') + ';';
+    if (!isUsed) btn.onclick = () => pickTag(tag, context);
+    container.appendChild(btn);
+  });
 }
 
 function pickTag(tag, context) {
