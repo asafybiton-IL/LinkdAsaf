@@ -804,6 +804,7 @@ function openModal(post = null, contextStatus = null, contextTag = null) {
   document.getElementById('field-date').value = post ? (post.date||'') : '';
   document.getElementById('copy-btn').style.display = post ? 'block' : 'none';
   renderTagChips();
+  setTimeout(() => renderTagSuggestions('modal-tag-suggestions', currentTags), 50);
   updateCharCount(document.getElementById('field-body'));
   document.getElementById('modal-overlay').classList.add('open');
   startAutosave();
@@ -1055,8 +1056,11 @@ function openWindow(post = null, contextStatus = null, contextTag = null) {
   setTimeout(() => updateCharCountWindow(winId), 50);
   startWindowAutosave(winId, post ? post.id : null, post ? post.created : null);
   windows[winId] = { id: post ? post.id : null, created: post ? post.created : null, changed: false, autosaveTimer: null, tagsList: [...initTags] };
-  // Render initial tags
-  setTimeout(() => renderWindowTags(winId), 50);
+  // Render initial tags + suggestions
+  setTimeout(() => {
+    renderWindowTags(winId);
+    renderTagSuggestions('tag-suggestions-'+winId, windows[winId]?.tagsList || []);
+  }, 50);
 }
 
 function activateWindow(winId) {
