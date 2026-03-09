@@ -490,24 +490,80 @@ function setSyncing(val, msg) {
 }
 
 async function init() {
-  setSyncing(true);
+  // Load from local cache immediately
+  const cached = localStorage.getItem('ayb_posts_cache');
+  if (cached) {
+    try {
+      posts = JSON.parse(cached);
+      render();
+      setSyncing(true);
+    } catch(e) {}
+  } else {
+    setSyncing(true);
+  }
+
+  // Then sync with Sheets in background
   try {
     const res = await fetch(SHEET_URL + '?action=getPosts');
     const data = await res.json();
-    posts = (data.posts || []).map(p => ({ ...p, id: Number(p.id), created: Number(p.created), tags: Array.isArray(p.tags) ? p.tags : [] }));
-    setSyncing(false);
+    const remote = (data.posts || []).map(p => ({ ...p, id: Number(p.id), created: Number(p.created), tags: Array.isArray(p.tags) ? p.tags : [] }));
+    // Merge: remote wins for existing, keep local-only posts that aren't on remote yet
+    const remoteIds = new Set(remote.map(p => p.id));
+    const localOnly = posts.filter(p => !remoteIds.has(p.id));
+    posts = [...remote, ...localOnly];
+    saveLocalCache();
+    setSyncing(false, '✅ מסונכרן');
+    render();
   } catch(e) {
-    setSyncing(false, '⚠️ שגיאת חיבור');
-    showToast('⚠️ לא ניתן להתחבר ל-Google Sheets');
-    posts = [];
+    if (cached) {
+      setSyncing(false, '📴 אופליין · מציג גרסה שמורה');
+    } else {
+      setSyncing(false, '⚠️ שגיאת חיבור');
+      showToast('⚠️ לא ניתן להתחבר. בדוק חיבור.');
+    }
   }
-  render();
 }
 
+function saveLocalCache() {
+  try { localStorage.setItem('ayb_posts_cache', JSON.stringify(posts)); } catch(e) {}
+}
+
+// Queue for offline saves
+let offlineQueue = JSON.parse(localStorage.getItem('ayb_offline_queue') || '[]');
+
+async function flushOfflineQueue() {
+  if (!offlineQueue.length) return;
+  const toFlush = [...offlineQueue];
+  offlineQueue = [];
+  localStorage.setItem('ayb_offline_queue', '[]');
+  for (const item of toFlush) {
+    try { await fetch(SHEET_URL, { method:'POST', body: JSON.stringify(item) }); }
+    catch(e) { offlineQueue.push(item); }
+  }
+  localStorage.setItem('ayb_offline_queue', JSON.stringify(offlineQueue));
+}
+
+// Auto-sync when coming back online
+window.addEventListener('online', () => {
+  setSyncing(false, '✅ חזר אינטרנט');
+  showToast('🌐 חזר אינטרנט — מסנכרן...');
+  flushOfflineQueue().then(() => init());
+});
+
+window.addEventListener('offline', () => {
+  setSyncing(false, '📴 אופליין');
+  showToast('📴 אין אינטרנט — שומר מקומית');
+});
+
 async function savePosts(post, action) {
+  saveLocalCache(); // Always save locally first
   try {
     await fetch(SHEET_URL, { method:'POST', body: JSON.stringify({ action, ...post }) });
-  } catch(e) { showToast('⚠️ שגיאה בשמירה'); }
+  } catch(e) {
+    // Offline — queue for later
+    offlineQueue.push({ action, ...post });
+    localStorage.setItem('ayb_offline_queue', JSON.stringify(offlineQueue));
+  }
 }
 
 // ========== IMPORT FROM URL ==========
