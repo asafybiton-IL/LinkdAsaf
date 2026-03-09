@@ -163,6 +163,12 @@
   .device-row .device-time { color:var(--text3); font-size:11px; }
 
   /* MULTI-WINDOW (desktop) */
+  /* Tag suggestions - global */
+  .tag-suggestions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .tag-suggest-chip { padding:5px 12px; border-radius:20px; background:var(--surface3); border:1px solid var(--border); color:var(--text3); font-size:12px; font-weight:500; cursor:pointer; font-family:'Heebo',sans-serif; transition:all 0.15s; }
+  .tag-suggest-chip:hover { border-color:var(--accent); color:var(--accent); background:rgba(108,99,255,0.08); }
+  .tag-suggest-chip.used { opacity:0.3; cursor:default; pointer-events:none; }
+
   @media (min-width:769px) {
     .modal-overlay { display:none !important; }
     .windows-container { position:fixed; inset:0; pointer-events:none; z-index:100; }
@@ -244,11 +250,7 @@
     .modal-footer button { flex:1; padding:13px; font-size:14px; }
     .autosave-indicator { display:none; }
 
-    /* Tag suggestions */
-    .tag-suggestions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-    .tag-suggest-chip { padding:5px 12px; border-radius:20px; background:var(--surface3); border:1px solid var(--border); color:var(--text3); font-size:12px; font-weight:500; cursor:pointer; font-family:'Heebo',sans-serif; transition:all 0.15s; }
-    .tag-suggest-chip:hover { border-color:var(--accent); color:var(--accent); background:rgba(108,99,255,0.08); }
-    .tag-suggest-chip.used { opacity:0.3; cursor:default; }
+
 
     /* Tags drawer */
     .mobile-tags-fab { position:fixed; bottom:20px; left:16px; width:46px; height:46px; border-radius:50%; background:var(--surface2); border:1px solid var(--border); color:var(--text2); font-size:18px; display:flex !important; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(0,0,0,0.4); cursor:pointer; z-index:80; }
@@ -1216,11 +1218,14 @@ function renderTagSuggestions(containerId, activeTags) {
   const container = document.getElementById(containerId);
   if (!container) return;
   const all = getAllExistingTags();
-  const unused = all.filter(t => !activeTags.includes(t));
-  if (unused.length === 0) { container.innerHTML = ''; return; }
-  container.innerHTML = unused.map(tag =>
-    `<button class="tag-suggest-chip" onclick="addSuggestedTag('${tag}','${containerId}')">#${tag}</button>`
-  ).join('');
+  if (all.length === 0) { container.innerHTML = ''; return; }
+  // Determine context from containerId
+  const context = containerId === 'modal-tag-suggestions' ? 'modal' : containerId.replace('tag-suggestions-','');
+  container.innerHTML = all.map(tag => {
+    const isUsed = (activeTags||[]).includes(tag);
+    if (isUsed) return `<button class="tag-suggest-chip used">#${tag}</button>`;
+    return `<button class="tag-suggest-chip" onclick="addSuggestedTag('${tag}','${containerId}','${context}')">#${tag}</button>`;
+  }).join('');
 }
 
 function filterTagSuggestions(query, context) {
