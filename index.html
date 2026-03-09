@@ -305,7 +305,7 @@
   </div>
 
   <div class="main">
-    <div class="topbar">
+    <div class="topbar" id="debug-bar">
       <h2 id="section-title">כל הפוסטים</h2>
       <div class="search-box"><span>🔍</span><input type="text" placeholder="חיפוש..." oninput="searchPosts(this.value)" /></div>
       <span class="sync-indicator" id="sync-indicator">⏳ טוען...</span>
@@ -353,9 +353,9 @@
       <div class="form-row" style="margin-top:16px">
         <label class="form-label">תגיות</label>
         <div class="tags-input-area" id="tags-input-area" onclick="document.getElementById('tag-input').focus()">
-          <input type="text" class="tags-input" id="tag-input" placeholder="הוסף תגית ולחץ Enter..." onkeydown="handleTagInput(event)" oninput="filterTagSuggestions(this.value,'modal')" />
+          <input type="text" class="tags-input" id="tag-input" placeholder="הוסף תגית ולחץ Enter..." onkeydown="handleTagInput(event)" oninput="onTagInput(this.value,'modal')" onfocus="onTagInput('','modal')" />
         </div>
-        <div class="tag-suggestions" id="modal-tag-suggestions"></div>
+        <div id="modal-tag-suggestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -807,7 +807,7 @@ function openModal(post = null, contextStatus = null, contextTag = null) {
   document.getElementById('field-date').value = post ? (post.date||'') : '';
   document.getElementById('copy-btn').style.display = post ? 'block' : 'none';
   renderTagChips();
-  setTimeout(() => renderTagSuggestions('modal-tag-suggestions', currentTags), 50);
+  setTimeout(() => onTagInput('', 'modal'), 100);
   updateCharCount(document.getElementById('field-body'));
   document.getElementById('modal-overlay').classList.add('open');
   startAutosave();
@@ -1035,9 +1035,9 @@ function openWindow(post = null, contextStatus = null, contextTag = null) {
       <div class="form-row" style="margin-top:12px">
         <label class="form-label">תגיות</label>
         <div class="tags-input-area window-tags-area" id="wf_tags_area_${winId}" onclick="document.getElementById('wf_tag_input_${winId}').focus()">
-          <input type="text" class="tags-input" id="wf_tag_input_${winId}" placeholder="הוסף תגית + Enter..." onkeydown="handleWindowTagInput(event,'${winId}')" oninput="filterTagSuggestions(this.value,'${winId}')" />
+          <input type="text" class="tags-input" id="wf_tag_input_${winId}" placeholder="הוסף תגית + Enter..." onkeydown="handleWindowTagInput(event,'${winId}')" oninput="onTagInput(this.value,'${winId}')" onfocus="onTagInput('','${winId}')" />
         </div>
-        <div class="tag-suggestions" id="tag-suggestions-${winId}"></div>
+        <div id="tag-suggestions-${winId}" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
       </div>
     </div>
     <div class="post-window-footer">
@@ -1062,8 +1062,8 @@ function openWindow(post = null, contextStatus = null, contextTag = null) {
   // Render initial tags + suggestions
   setTimeout(() => {
     renderWindowTags(winId);
-    renderTagSuggestions('tag-suggestions-'+winId, windows[winId]?.tagsList || []);
-  }, 50);
+    onTagInput('', winId);
+  }, 100);
 }
 
 function activateWindow(winId) {
@@ -1213,49 +1213,36 @@ function getAllExistingTags() {
   const all = new Set();
   posts.filter(p => p.status !== 'deleted').forEach(p => {
     let tags = p.tags || [];
-    // Handle case where tags come as comma-separated string from Sheets
     if (typeof tags === 'string') tags = tags.split(',').map(t => t.trim()).filter(Boolean);
     tags.forEach(t => { if (t) all.add(t.trim()); });
   });
   return [...all].sort();
 }
 
-function renderTagSuggestions(containerId, activeTags) {
+function onTagInput(query, context) {
+  const isModal = context === 'modal';
+  const containerId = isModal ? 'modal-tag-suggestions' : 'tag-suggestions-' + context;
   const container = document.getElementById(containerId);
   if (!container) return;
+  const activeTags = isModal ? currentTags : (windows[context]?.tagsList || []);
   const all = getAllExistingTags();
-  if (all.length === 0) {
-    container.innerHTML = '<span style="font-size:11px;color:var(--text3)">אין תגיות קיימות עדיין</span>';
+  const filtered = query.trim()
+    ? all.filter(t => t.includes(query.trim()))
+    : all;
+  if (filtered.length === 0) {
+    container.innerHTML = '';
     return;
   }
-  // Determine context from containerId
-  const context = containerId === 'modal-tag-suggestions' ? 'modal' : containerId.replace('tag-suggestions-','');
-  container.innerHTML = all.map(tag => {
-    const isUsed = (activeTags||[]).includes(tag);
-    if (isUsed) return `<button class="tag-suggest-chip used">#${tag}</button>`;
-    return `<button class="tag-suggest-chip" onclick="addSuggestedTag('${tag}','${containerId}','${context}')">#${tag}</button>`;
+  container.innerHTML = filtered.map(tag => {
+    const isUsed = activeTags.includes(tag);
+    return `<button style="padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;cursor:${isUsed?'default':'pointer'};border:1.5px solid ${isUsed?'var(--accent)':'var(--border)'};background:${isUsed?'rgba(108,99,255,0.15)':'var(--surface3)'};color:${isUsed?'var(--accent)':'var(--text3)'};font-family:Heebo,sans-serif;transition:all 0.15s;" ${isUsed?'':'onclick="pickTag(''+tag+'',''+context+'')"'}>#${tag}</button>`;
   }).join('');
 }
 
-function filterTagSuggestions(query, context) {
-  const containerId = context === 'modal' ? 'modal-tag-suggestions' : 'tag-suggestions-' + context;
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  const activeTags = context === 'modal' ? currentTags : (windows[context]?.tagsList || []);
-  const all = getAllExistingTags();
-  const filtered = query
-    ? all.filter(t => t.includes(query) && !activeTags.includes(t))
-    : all.filter(t => !activeTags.includes(t));
-  if (filtered.length === 0) { container.innerHTML = ''; return; }
-  container.innerHTML = filtered.map(tag =>
-    `<button class="tag-suggest-chip" onclick="addSuggestedTag('${tag}','${containerId}','${context}')">#${tag}</button>`
-  ).join('');
-}
-
-function addSuggestedTag(tag, containerId, context) {
-  if (context === 'modal' || !context) {
+function pickTag(tag, context) {
+  if (context === 'modal') {
     if (!currentTags.includes(tag)) { currentTags.push(tag); renderTagChips(); }
-    renderTagSuggestions(containerId, currentTags);
+    onTagInput('', 'modal');
     const input = document.getElementById('tag-input');
     if (input) { input.value = ''; input.focus(); }
   } else {
@@ -1266,7 +1253,7 @@ function addSuggestedTag(tag, containerId, context) {
       renderWindowTags(context);
       markWindowChanged(context);
     }
-    renderTagSuggestions(containerId, windows[context].tagsList);
+    onTagInput('', context);
     const input = document.getElementById('wf_tag_input_' + context);
     if (input) { input.value = ''; input.focus(); }
   }
@@ -1348,6 +1335,19 @@ if (!checkAuth()) {
   // wait for login
 } else {
   init().then(checkImport).then(() => setTimeout(restoreDraftIfExists, 500));
+}
+</script>
+<div id="debug-output" style="position:fixed;bottom:0;right:0;background:#111;color:#0f0;font-size:11px;padding:8px;z-index:9999;max-width:300px;max-height:200px;overflow:auto;display:none;border-top-left-radius:8px;"></div>
+<button onclick="runDebug()" style="position:fixed;bottom:0;right:0;background:red;color:white;z-index:10000;padding:6px 10px;font-size:12px;border:none;cursor:pointer;">DEBUG</button>
+<script>
+function runDebug() {
+  const out = document.getElementById('debug-output');
+  out.style.display = 'block';
+  const tags = getAllExistingTags();
+  const postsInfo = posts.slice(0,3).map(p => ({id:p.id, tagsType: typeof p.tags, tags: p.tags}));
+  out.innerHTML = '<b>posts count:</b> ' + posts.length + '<br>' +
+    '<b>tags found:</b> ' + JSON.stringify(tags) + '<br>' +
+    '<b>sample posts:</b> ' + JSON.stringify(postsInfo);
 }
 </script>
 </body>
