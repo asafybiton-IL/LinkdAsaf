@@ -240,15 +240,16 @@
 
     /* Modal as bottom sheet */
     .modal-overlay { align-items:flex-end; padding:0; }
-    .modal { border-radius:20px 20px 0 0; max-height:93vh; padding:20px 16px 0; display:flex; flex-direction:column; }
-    .modal-header { flex-shrink:0; margin-bottom:14px; }
-    .modal-body-scroll { flex:1; overflow-y:auto; padding-bottom:100px; -webkit-overflow-scrolling:touch; }
-    #field-body { min-height:200px; font-size:16px !important; line-height:1.8; }
+    .modal { border-radius:20px 20px 0 0; max-height:93vh; padding:20px 16px 0; display:flex; flex-direction:column; overflow:hidden; }
+    .modal-header { flex-shrink:0; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+    .modal-body-scroll { flex:1; overflow-y:auto; padding:0 0 16px; -webkit-overflow-scrolling:touch; }
+    #field-body { min-height:180px; font-size:16px !important; line-height:1.8; }
     .form-input, .form-select, .form-textarea { font-size:16px !important; }
     .form-input, .form-select { padding:13px 14px; }
-    .modal-footer { position:sticky; bottom:0; background:var(--surface); padding:10px 0 24px; margin-top:0; border-top:1px solid var(--border); flex-shrink:0; gap:8px; z-index:10; }
+    .modal-footer { position:sticky; bottom:0; background:var(--surface); padding:12px 0 28px; border-top:1px solid var(--border); flex-shrink:0; gap:8px; z-index:10; display:flex; }
     .modal-footer button { flex:1; padding:13px; font-size:14px; }
     .autosave-indicator { display:none; }
+    .tag-suggestions { padding-bottom:8px; }
 
 
 
@@ -1210,7 +1211,12 @@ function dropToTag(tag) {
 // ========== TAG SUGGESTIONS ==========
 function getAllExistingTags() {
   const all = new Set();
-  posts.filter(p => p.status !== 'deleted').forEach(p => (p.tags||[]).forEach(t => all.add(t)));
+  posts.filter(p => p.status !== 'deleted').forEach(p => {
+    let tags = p.tags || [];
+    // Handle case where tags come as comma-separated string from Sheets
+    if (typeof tags === 'string') tags = tags.split(',').map(t => t.trim()).filter(Boolean);
+    tags.forEach(t => { if (t) all.add(t.trim()); });
+  });
   return [...all].sort();
 }
 
@@ -1218,7 +1224,10 @@ function renderTagSuggestions(containerId, activeTags) {
   const container = document.getElementById(containerId);
   if (!container) return;
   const all = getAllExistingTags();
-  if (all.length === 0) { container.innerHTML = ''; return; }
+  if (all.length === 0) {
+    container.innerHTML = '<span style="font-size:11px;color:var(--text3)">אין תגיות קיימות עדיין</span>';
+    return;
+  }
   // Determine context from containerId
   const context = containerId === 'modal-tag-suggestions' ? 'modal' : containerId.replace('tag-suggestions-','');
   container.innerHTML = all.map(tag => {
