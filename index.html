@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" /><meta name="viewport"  content="width=device-width, initial-scale=1.0">
 <title>פוסט מנג׳ר | אסף יעיש ביטון</title>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -240,7 +240,8 @@
 
     /* Modal as bottom sheet */
     .modal-overlay { align-items:flex-end; padding:0; }
-    .modal { border-radius:20px 20px 0 0; max-height:93vh; padding:20px 16px 0; display:flex; flex-direction:column; overflow:hidden; }
+    .modal { border-radius:20px 20px 0 0; height:92vh; padding:20px 16px 0; display:flex; flex-direction:column; overflow:hidden; transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .modal-overlay.open .modal { transform:translateY(0); }
     .modal-header { flex-shrink:0; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--border); }
     .modal-body-scroll { flex:1; overflow-y:auto; padding:0 0 16px; -webkit-overflow-scrolling:touch; }
     #field-body { min-height:180px; font-size:16px !important; line-height:1.8; }
@@ -821,16 +822,22 @@ function openModal(post = null, contextStatus = null, contextTag = null) {
   renderTagChips();
   updateCharCount(document.getElementById('field-body'));
   document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => {
+    const scroll = document.querySelector('.modal-body-scroll');
+    if (scroll) scroll.scrollTop = 0;
+    onTagInput('', 'modal');
+  }, 150);
   startAutosave();
-  setTimeout(() => onTagInput('', 'modal'), 150);
 }
 
 function closeModal() {
   stopAutosave();
-  document.getElementById('modal-overlay').classList.remove('open');
+  const overlay = document.getElementById('modal-overlay');
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
   editingId = null;
   currentTags = [];
-  // Keep draft cache on close — will restore next time
 }
 
 function handleOverlayClick(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
@@ -1074,8 +1081,8 @@ function openWindow(post = null, contextStatus = null, contextTag = null) {
   // Render initial tags + suggestions
   setTimeout(() => {
     renderWindowTags(winId);
-    onTagInput('', winId);
-  }, 100);
+    onTagInput('', String(winId));
+  }, 300);
 }
 
 function activateWindow(winId) {
@@ -1232,6 +1239,7 @@ function getAllExistingTags() {
 }
 
 function onTagInput(query, context) {
+  context = String(context);
   const isModal = context === 'modal';
   const containerId = isModal ? 'modal-tag-suggestions' : 'tag-suggestions-' + context;
   const container = document.getElementById(containerId);
