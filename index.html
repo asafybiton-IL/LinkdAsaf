@@ -416,7 +416,7 @@ function checkLogin() {
     document.getElementById('login-overlay').style.display = 'none';
     err.textContent = '';
     logDeviceLogin();
-    init().then(checkImport);
+    init().then(checkImport).then(() => setTimeout(restoreDraftIfExists, 500));
   } else {
     input.classList.add('error');
     err.textContent = 'סיסמה שגויה, נסה שוב';
@@ -554,6 +554,29 @@ window.addEventListener('offline', () => {
   setSyncing(false, '📴 אופליין');
   showToast('📴 אין אינטרנט — שומר מקומית');
 });
+
+// Polling fallback — every 30s check connectivity and flush queue
+setInterval(async () => {
+  if (!navigator.onLine) return;
+  if (offlineQueue.length > 0) {
+    await flushOfflineQueue();
+    showToast('🔄 סונכרן ' + offlineQueue.length + ' שינויים');
+  }
+  // Also check if remote has newer data
+  try {
+    const res = await fetch(SHEET_URL + '?action=getPosts&t=' + Date.now());
+    const data = await res.json();
+    const remote = (data.posts || []).map(p => ({ ...p, id: Number(p.id), created: Number(p.created), tags: Array.isArray(p.tags) ? p.tags : [] }));
+    const remoteIds = new Set(remote.map(p => p.id));
+    const localOnly = posts.filter(p => !remoteIds.has(p.id));
+    posts = [...remote, ...localOnly];
+    saveLocalCache();
+    render();
+    setSyncing(false, '✅ מסונכרן');
+  } catch(e) {
+    setSyncing(false, '📴 אופליין');
+  }
+}, 30000);
 
 async function savePosts(post, action) {
   saveLocalCache(); // Always save locally first
@@ -763,6 +786,7 @@ function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   editingId = null;
   currentTags = [];
+  // Keep draft cache on close — will restore next time
 }
 
 function handleOverlayClick(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
@@ -787,6 +811,7 @@ function savePost() {
     showToast('🎉 פוסט נוסף!');
   }
   closeModal();
+  clearDraftCache();
   render();
   savePosts(postData, 'savePost');
 }
@@ -810,7 +835,16 @@ function restorePost(id) {
 function startAutosave() {
   if (autosaveTimer) clearInterval(autosaveTimer);
   autosaveChanged = false;
-  ['field-title','field-body','field-visual'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', () => { autosaveChanged = true; }); });
+
+  // Save draft to cache on every keystroke (survives app close)
+  ['field-title','field-body','field-visual'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => {
+      autosaveChanged = true;
+      saveDraftToCache();
+    });
+  });
+
   autosaveTimer = setInterval(async () => {
     if (!autosaveChanged) return;
     const title = document.getElementById('field-title').value.trim();
@@ -823,6 +857,36 @@ function startAutosave() {
     savePosts(postData, 'savePost');
     setAutosaveStatus('saved'); render();
   }, 30000);
+}
+
+function saveDraftToCache() {
+  const title = document.getElementById('field-title')?.value || '';
+  const body = document.getElementById('field-body')?.value || '';
+  const visual = document.getElementById('field-visual')?.value || '';
+  const status = document.getElementById('field-status')?.value || 'idea';
+  const date = document.getElementById('field-date')?.value || '';
+  if (!title && !body) return;
+  const draft = { id: editingId || '__draft__', title, body, visual, status, date, tags: currentTags, created: editingId ? (posts.find(p=>p.id===editingId)?.created||Date.now()) : Date.now(), isDraft: true };
+  localStorage.setItem('ayb_open_draft', JSON.stringify(draft));
+}
+
+function clearDraftCache() {
+  localStorage.removeItem('ayb_open_draft');
+}
+
+function restoreDraftIfExists() {
+  const raw = localStorage.getItem('ayb_open_draft');
+  if (!raw) return;
+  try {
+    const draft = JSON.parse(raw);
+    if (!draft.title && !draft.body) return;
+    // Check if it was already saved as a real post
+    if (draft.id !== '__draft__' && posts.find(p => p.id === draft.id)) {
+      clearDraftCache(); return;
+    }
+    showToast('📝 נמצא טיוטה שלא נשמרה — שוחזרה!');
+    openModal({ ...draft, id: draft.id === '__draft__' ? null : draft.id });
+  } catch(e) { clearDraftCache(); }
 }
 
 function stopAutosave() { if (autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; } setAutosaveStatus(''); }
@@ -1164,11 +1228,25 @@ function duplicatePost(postId, fromWinId) {
   showToast('⧉ הפוסט שוכפל!');
 }
 
+// Save everything before page close
+window.addEventListener('beforeunload', () => {
+  saveLocalCache();
+});
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/LinkdAsaf/sw.js')
+      .then(reg => console.log('SW registered'))
+      .catch(err => console.log('SW failed:', err));
+  });
+}
+
 // ========== START ==========
 if (!checkAuth()) {
   // wait for login
 } else {
-  init().then(checkImport);
+  init().then(checkImport).then(() => setTimeout(restoreDraftIfExists, 500));
 }
 </script>
 </body>
