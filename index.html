@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" /><meta name="viewport"  content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>פוסט מנג׳ר | אסף יעיש ביטון</title>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -1076,16 +1076,13 @@ function openWindow(post = null, contextStatus = null, contextTag = null) {
     if (hints.length) showToast('פוסט חדש: ' + hints.join(' · '));
   }
   setTimeout(() => updateCharCountWindow(winId), 50);
-  startWindowAutosave(winId, post ? post.id : null, post ? post.created : null);
   windows[winId] = { id: post ? post.id : null, created: post ? post.created : null, changed: false, autosaveTimer: null, tagsList: [...initTags] };
+  startWindowAutosave(winId, post ? post.id : null, post ? post.created : null);
   // Render initial tags + suggestions
   setTimeout(() => {
     renderWindowTags(winId);
-    const suggDiv = document.getElementById('tag-suggestions-' + winId);
-    if (suggDiv) {
-      onTagInput('', winId);
-    }
-  }, 500);
+    onTagInput('', winId);
+  }, 200);
 }
 
 function activateWindow(winId) {
@@ -1247,7 +1244,7 @@ function onTagInput(query, context) {
   const containerId = isModal ? 'modal-tag-suggestions' : 'tag-suggestions-' + context;
   const container = document.getElementById(containerId);
   if (!container) return;
-  const activeTags = isModal ? currentTags : (windows[context]?.tagsList || []);
+  const activeTags = isModal ? (currentTags || []) : (windows[context]?.tagsList || []);
   const all = getAllExistingTags();
   const q = (query||'').trim();
   const filtered = q ? all.filter(t => t.includes(q)) : all;
@@ -1296,7 +1293,8 @@ function renderWindowTags(winId) {
     area.appendChild(chip);
   });
   area.appendChild(input);
-  onTagInput('', winId);
+  // Show suggestions after render
+  setTimeout(() => onTagInput('', winId), 50);
 }
 
 function handleWindowTagInput(e, winId) {
