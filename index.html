@@ -180,6 +180,7 @@
   .tag-suggest-chip.used { opacity:0.3; cursor:default; pointer-events:none; }
 
   @media (min-width:769px) {
+    .compact-toggle { display:none !important; }
     .modal-overlay { display:none !important; }
     .windows-container { position:fixed; inset:0; pointer-events:none; z-index:100; }
     .post-window { position:absolute; width:480px; max-height:85vh; background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.6); display:flex; flex-direction:column; pointer-events:all; transition:box-shadow 0.15s; overflow:hidden; }
@@ -331,9 +332,10 @@
   </div>
 
   <div class="main">
-    <div class="topbar" id="debug-bar">
+    <div class="topbar">
       <h2 id="section-title">כל הפוסטים</h2>
       <div class="search-box"><span>🔍</span><input type="text" placeholder="חיפוש..." oninput="searchPosts(this.value)" /></div>
+    <button class="compact-toggle" id="compact-toggle-btn" onclick="toggleCompactView()" title="תצוגה קומפקטית">⊞</button>
       <span class="sync-indicator" id="sync-indicator">⏳ טוען...</span>
       <span class="devices-badge" onclick="toggleDevices()" id="devices-badge" style="display:none">📱 <span id="devices-count">0</span> מכשירים</span>
       <select class="sort-select" id="sort-select" onchange="setSort(this.value)">
@@ -815,26 +817,26 @@ function searchMatch(post, query) {
   if (!query) return true;
   const q = query.toLowerCase().trim();
   const fields = [post.title||'', post.body||'', post.visual||'', ...(post.tags||[])];
-  // Exact match
   if (fields.some(f => f.toLowerCase().includes(q))) return true;
-  // Fuzzy: allow 1 typo for queries > 3 chars
   if (q.length > 3) {
     return fields.some(f => {
-      const words = f.toLowerCase().split(/\s+/);
-      return words.some(w => levenshtein(w, q) <= 1 || w.includes(q) || q.includes(w));
+      const words = f.toLowerCase().split(' ');
+      return words.some(w => levDist(w, q) <= 1);
     });
   }
   return false;
 }
 
-function levenshtein(a, b) {
+function levDist(a, b) {
   if (Math.abs(a.length - b.length) > 2) return 99;
-  const dp = Array.from({length: a.length+1}, (_,i) => [i, ...Array(b.length).fill(0)]);
-  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
-  for (let i = 1; i <= a.length; i++)
-    for (let j = 1; j <= b.length; j++)
+  const m = a.length, n = b.length;
+  const dp = [];
+  for (let i = 0; i <= m; i++) { dp[i] = [i]; for (let j = 1; j <= n; j++) dp[i][j] = 0; }
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
       dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
-  return dp[a.length][b.length];
+  return dp[m][n];
 }
 
 function renderPosts() {
@@ -1172,10 +1174,18 @@ function renderMobileTagsDrawer() {
   const sort = getTagSort();
   const sel = document.getElementById('mobile-tag-sort');
   if (sel) sel.value = sort;
-  const sortedTags = getSortedTagList();
+  const pinnedTags = JSON.parse(localStorage.getItem('ayb_pinned_tags')||'[]');
+  const allTags = getSortedTagList();
+  // Pinned first
+  const pinned = allTags.filter(({tag}) => pinnedTags.includes(tag));
+  const unpinned = allTags.filter(({tag}) => !pinnedTags.includes(tag));
+  const sortedTags = [...pinned, ...unpinned];
   if (sortedTags.length === 0) { container.innerHTML = '<p style="color:var(--text3);font-size:13px">אין תגיות עדיין</p>'; return; }
   container.innerHTML = `<button class="drawer-tag-btn ${!filterTag?'active':''}" onclick="filterByTagMobile(null,this)">📁 הכל</button>` +
-    sortedTags.map(({tag,count}) => `<button class="drawer-tag-btn ${filterTag===tag?'active':''}" onclick="filterByTagMobile('${tag}',this)">#${tag} <span style="opacity:0.7;font-size:11px">${count}</span></button>`).join('');
+    sortedTags.map(({tag,count}) => {
+      const isPinned = pinnedTags.includes(tag);
+      return `<button class="drawer-tag-btn ${filterTag===tag?'active':''}" onclick="filterByTagMobile('${tag}',this)">${isPinned?'📌 ':''}#${tag} <span style="opacity:0.7;font-size:11px">${count}</span></button>`;
+    }).join('');
 }
 
 function closeTagsDrawer() { document.getElementById('tags-drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); }
