@@ -311,7 +311,14 @@
       <button class="sidebar-btn" onclick="filterStatus('published',this)" ondragover="sidebarDragOver(event,'published')" ondragleave="sidebarDragLeave(event)" ondrop="sidebarDrop(event,'published')"><span class="dot" style="background:var(--published)"></span> פורסם <span class="count-badge" id="count-published">0</span></button>
       <button class="sidebar-btn" onclick="filterStatus('deleted',this)" ondragover="sidebarDragOver(event,'deleted')" ondragleave="sidebarDragLeave(event)" ondrop="sidebarDrop(event,'deleted')"><span>🗑</span> נמחקו לאחרונה <span class="count-badge" id="count-deleted">0</span></button>
     </div>
-    <div class="sidebar-section">תגיות</div>
+    <div class="sidebar-section" style="display:flex;align-items:center;justify-content:space-between;padding-left:16px;">
+      תגיות
+      <select id="sidebar-tag-sort" onchange="saveTagSort(this.value);updateSidebarTags()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text3);padding:3px 6px;font-size:10px;font-family:Heebo,sans-serif;outline:none;cursor:pointer;">
+        <option value="alpha">א׳-ב׳</option>
+        <option value="count">שימושים</option>
+        <option value="recent">אחרון</option>
+      </select>
+    </div>
     <div class="tag-list" id="sidebar-tags"></div>
   </div>
 
@@ -423,7 +430,14 @@
 </div>
 <div class="mobile-tags-drawer" id="tags-drawer">
   <div class="drawer-handle"></div>
-  <div class="drawer-title">🏷️ סינון לפי תגית</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <span class="drawer-title" style="margin-bottom:0;">🏷️ סינון לפי תגית</span>
+    <select id="mobile-tag-sort" onchange="saveTagSort(this.value);renderMobileTagsDrawer()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text2);padding:5px 10px;font-size:12px;font-family:Heebo,sans-serif;outline:none;">
+      <option value="alpha">א׳-ב׳</option>
+      <option value="count">שימושים</option>
+      <option value="recent">אחרון</option>
+    </select>
+  </div>
   <div class="drawer-tags-grid" id="drawer-tags-list"></div>
 </div>
 <button class="mobile-tags-fab" id="tags-fab" onclick="openTagsDrawer()">🏷️<span class="fab-count" id="fab-count" style="display:none">0</span></button>
@@ -723,12 +737,39 @@ function updateStats() {
   posts = posts.filter(p => !(p.status === 'deleted' && p.deletedAt && (now - p.deletedAt) > 48 * 3600 * 1000));
 }
 
+function getTagSort() { return localStorage.getItem('ayb_tag_sort') || 'alpha'; }
+
+function saveTagSort(val) {
+  localStorage.setItem('ayb_tag_sort', val);
+  ['sidebar-tag-sort','mobile-tag-sort','tag-sort-select'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = val;
+  });
+}
+
+function getSortedTagList() {
+  const count = {}, lastUsed = {};
+  posts.filter(p => p.status !== 'deleted').forEach(p => {
+    (p.tags||[]).forEach(t => {
+      count[t] = (count[t]||0) + 1;
+      lastUsed[t] = Math.max(lastUsed[t]||0, p.updated||p.created||0);
+    });
+  });
+  let tags = Object.keys(count);
+  const sort = getTagSort();
+  if (sort === 'count') tags.sort((a,b) => count[b] - count[a]);
+  else if (sort === 'recent') tags.sort((a,b) => (lastUsed[b]||0) - (lastUsed[a]||0));
+  else tags.sort((a,b) => a.localeCompare(b, 'he'));
+  return tags.map(t => ({ tag: t, count: count[t], lastUsed: lastUsed[t] }));
+}
+
 function updateSidebarTags() {
-  const allTags = new Set();
-  posts.filter(p => p.status !== 'deleted').forEach(p => (p.tags||[]).forEach(t => allTags.add(t)));
   const container = document.getElementById('sidebar-tags');
+  const sortedTags = getSortedTagList();
+  const sort = getTagSort();
+  const sel = document.getElementById('sidebar-tag-sort');
+  if (sel) sel.value = sort;
   container.innerHTML = '';
-  allTags.forEach(tag => {
+  sortedTags.forEach(({ tag }) => {
     const chip = document.createElement('button');
     chip.className = 'tag-chip' + (filterTag === tag ? ' active' : '');
     chip.textContent = tag;
@@ -1041,13 +1082,19 @@ function showToast(msg) {
 function openTagsDrawer() {
   document.getElementById('tags-drawer').classList.add('open');
   document.getElementById('drawer-overlay').classList.add('open');
-  const tagCounts = {};
-  posts.filter(p=>p.status!=='deleted').forEach(p => (p.tags||[]).forEach(t => { tagCounts[t]=(tagCounts[t]||0)+1; }));
-  const tags = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]);
+  renderMobileTagsDrawer();
+}
+
+function renderMobileTagsDrawer() {
   const container = document.getElementById('drawer-tags-list');
-  if (tags.length === 0) { container.innerHTML = '<p style="color:var(--text3);font-size:13px">אין תגיות עדיין</p>'; return; }
+  if (!container) return;
+  const sort = getTagSort();
+  const sel = document.getElementById('mobile-tag-sort');
+  if (sel) sel.value = sort;
+  const sortedTags = getSortedTagList();
+  if (sortedTags.length === 0) { container.innerHTML = '<p style="color:var(--text3);font-size:13px">אין תגיות עדיין</p>'; return; }
   container.innerHTML = `<button class="drawer-tag-btn ${!filterTag?'active':''}" onclick="filterByTagMobile(null,this)">📁 הכל</button>` +
-    tags.map(([tag,count]) => `<button class="drawer-tag-btn ${filterTag===tag?'active':''}" onclick="filterByTagMobile('${tag}',this)">#${tag} <span style="opacity:0.7;font-size:11px">${count}</span></button>`).join('');
+    sortedTags.map(({tag,count}) => `<button class="drawer-tag-btn ${filterTag===tag?'active':''}" onclick="filterByTagMobile('${tag}',this)">#${tag} <span style="opacity:0.7;font-size:11px">${count}</span></button>`).join('');
 }
 
 function closeTagsDrawer() { document.getElementById('tags-drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); }
@@ -1307,13 +1354,8 @@ function renderTagPicker() {
   tagSortPref = sort;
   localStorage.setItem('ayb_tag_sort', sort);
 
-  const { count, lastUsed } = getTagStats();
-  let tags = getAllExistingTags();
-  if (query) tags = tags.filter(t => t.includes(query));
-
-  if (sort === 'count') tags.sort((a,b) => (count[b]||0) - (count[a]||0));
-  else if (sort === 'recent') tags.sort((a,b) => (lastUsed[b]||0) - (lastUsed[a]||0));
-  // alpha is default from getAllExistingTags
+  let tagList = getSortedTagList();
+  if (query) tagList = tagList.filter(({tag}) => tag.includes(query));
 
   const activeTags = tagPickerContext === 'modal'
     ? (currentTags||[])
@@ -1325,17 +1367,14 @@ function renderTagPicker() {
     return;
   }
 
-  tags.forEach(tag => {
+  tagList.forEach(({tag, count}) => {
     const isActive = activeTags.includes(tag);
     const btn = document.createElement('button');
     btn.className = 'drawer-tag-btn' + (isActive ? ' active' : '');
-    btn.innerHTML = '#' + tag + (count[tag] ? ` <span style="opacity:0.6;font-size:11px;">${count[tag]}</span>` : '');
+    btn.innerHTML = '#' + tag + (count ? ` <span style="opacity:0.6;font-size:11px;">${count}</span>` : '');
     btn.onclick = () => {
-      if (isActive) {
-        removeTagInContext(tag, tagPickerContext);
-      } else {
-        addTagInContext(tag, tagPickerContext);
-      }
+      if (isActive) { removeTagInContext(tag, tagPickerContext); }
+      else { addTagInContext(tag, tagPickerContext); }
       renderTagPicker();
     };
     grid.appendChild(btn);
