@@ -61,6 +61,9 @@
   .posts-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
   .posts-list { display:flex; flex-direction:column; gap:10px; }
   .post-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+  .post-card.selected { border-color:var(--accent) !important; background:rgba(108,99,255,0.08) !important; }
+  .multi-select-bar { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:2px solid var(--accent); padding:12px 20px; display:flex; align-items:center; gap:10px; z-index:90; transform:translateY(100%); transition:transform 0.25s; }
+  .multi-select-bar.open { transform:translateY(0); }
   .post-card::before { content:''; position:absolute; top:0; right:0; width:3px; height:100%; border-radius:0 14px 14px 0; }
   .post-card.status-ready::before { background:var(--ready); }
   .post-card.status-draft::before { background:var(--draft); }
@@ -313,6 +316,7 @@
     <div class="sidebar-section">סטטוס</div>
     <div class="sidebar-filters">
       <button class="sidebar-btn" id="fav-filter-btn" onclick="toggleFavFilter(this)">⭐ מועדפים <span class="count-badge" id="count-fav">0</span></button>
+      <button class="sidebar-btn" id="recent-filter-btn" onclick="toggleRecentFilter(this)">🕐 עבדתי לאחרונה <span class="count-badge">10</span></button>
       <button class="sidebar-btn active" onclick="filterStatus('all',this)"><span>📁</span> הכל <span class="count-badge" id="count-all">0</span></button>
       <button class="sidebar-btn" onclick="filterStatus('idea',this)" ondragover="sidebarDragOver(event,'idea')" ondragleave="sidebarDragLeave(event)" ondrop="sidebarDrop(event,'idea')"><span class="dot" style="background:var(--idea)"></span> רעיון <span class="count-badge" id="count-idea">0</span></button>
       <button class="sidebar-btn" onclick="filterStatus('draft',this)" ondragover="sidebarDragOver(event,'draft')" ondragleave="sidebarDragLeave(event)" ondrop="sidebarDrop(event,'draft')"><span class="dot" style="background:var(--draft)"></span> דראפט <span class="count-badge" id="count-draft">0</span></button>
@@ -321,7 +325,7 @@
       <button class="sidebar-btn" onclick="filterStatus('deleted',this)" ondragover="sidebarDragOver(event,'deleted')" ondragleave="sidebarDragLeave(event)" ondrop="sidebarDrop(event,'deleted')"><span>🗑</span> נמחקו לאחרונה <span class="count-badge" id="count-deleted">0</span></button>
     </div>
     <div class="sidebar-section" style="display:flex;align-items:center;justify-content:space-between;padding-left:16px;">
-      תגיות
+      <span style="display:flex;align-items:center;gap:6px;">תגיות <button onclick="openTagManager()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0;" title="ניהול תגיות">⚙️</button></span>
       <select id="sidebar-tag-sort" onchange="saveTagSort(this.value);updateSidebarTags()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text3);padding:3px 6px;font-size:10px;font-family:Heebo,sans-serif;outline:none;cursor:pointer;">
         <option value="alpha">א׳-ב׳</option>
         <option value="count">שימושים</option>
@@ -414,6 +418,30 @@
 
 <!-- Mobile tags drawer -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeTagsDrawer()"></div>
+
+<!-- MULTI SELECT BAR -->
+<div class="multi-select-bar" id="multi-select-bar">
+  <span id="multi-select-count" style="font-weight:700;color:var(--accent);flex:1;">0 נבחרו</span>
+  <button class="btn-copy" onclick="bulkFavorite()" title="מועדף">⭐</button>
+  <button class="btn-copy" onclick="bulkAddTag()" title="הוסף תגית">🏷️</button>
+  <button class="btn-copy" onclick="bulkDelete()" title="מחק" style="color:var(--accent2);">🗑</button>
+  <button class="btn-secondary" onclick="clearSelection()">ביטול</button>
+</div>
+
+<!-- TAG MANAGER MODAL -->
+<div class="modal-overlay" id="tag-manager-overlay" style="z-index:310;">
+  <div class="modal" style="max-width:480px;max-height:80vh;border-radius:16px;padding:24px;">
+    <div class="modal-header" style="margin-bottom:16px;">
+      <h3 style="font-size:17px;font-weight:800;">⚙️ ניהול תגיות</h3>
+      <button onclick="closeTagManager()" style="background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;">×</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding-bottom:16px;" id="tag-manager-list"></div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;display:flex;gap:8px;">
+      <input type="text" id="tag-manager-new" placeholder="שם תגית חדשה..." onkeydown="if(event.key==='Enter')createNewTag()" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;font-family:Heebo,sans-serif;outline:none;direction:rtl;" />
+      <button onclick="createNewTag()" class="btn-primary" style="padding:9px 16px;">צור</button>
+    </div>
+  </div>
+</div>
 
 <!-- TAG PICKER SHEET -->
 <div class="tag-picker-overlay" id="tag-picker-overlay" onclick="closeTagPicker()"></div>
@@ -845,7 +873,9 @@ function renderPosts() {
     const matchTag = !filterTag || (p.tags||[]).includes(filterTag);
     const matchSearch = !currentSearch || searchMatch(p, currentSearch);
     const matchFav = !showFavOnly || (p.tags||[]).includes('⭐');
-    return matchStatus && matchTag && matchSearch && matchFav;
+    const recentIds = showRecentOnly ? posts.filter(p=>p.status!=='deleted').sort((a,b)=>(b.updated||b.created)-(a.updated||a.created)).slice(0,10).map(p=>p.id) : null;
+    const matchRecent = !showRecentOnly || (recentIds && recentIds.includes(p.id));
+    return matchStatus && matchTag && matchSearch && matchFav && matchRecent;
   });
   const sortVal = window.currentSort || 'created_desc';
   const statusOrder = { idea:0, draft:1, ready:2, published:3, deleted:4 };
@@ -925,7 +955,7 @@ function onCardDragEnd() {
 
 function renderCard(post) {
   const badge = `<span class="status-badge badge-${post.status}">${statusEmoji[post.status]||''} ${statusLabels[post.status]||''}</span>`;
-  const tags = (post.tags||[]).map(t => `<span class="post-tag">${t}</span>`).join('');
+  const tags = (post.tags||[]).filter(t=>t!=='⭐').map(t => `<span class="post-tag" onclick="event.stopPropagation();filterByTag('${t}')" style="cursor:pointer;" title="סנן לפי תגית">${t}</span>`).join('');
   const dateStr = post.date ? `📅 ${post.date}` : '';
   const visualHtml = post.visual ? `<div class="post-visual">🎨 ${post.visual}</div>` : '';
   const isFav = (post.tags||[]).includes('⭐');
@@ -939,7 +969,7 @@ function renderCard(post) {
   if (currentView === 'list') {
     return `<div class="post-card post-card-list status-${post.status}" onclick="editPost(${post.id})"><div style="flex:1;min-width:0"><div class="post-title">${post.title||'ללא כותרת'}</div><div class="post-body">${post.body||''}</div></div>${badge}<div class="post-date">${dateStr}</div><div class="post-actions" style="opacity:1">${actions}</div></div>`;
   }
-  return `<div class="post-card status-${post.status}" onclick="editPost(${post.id})"><div class="post-card-header"><div class="post-title">${post.title||'ללא כותרת'}</div>${badge}</div><div class="post-body">${post.body||'אין תוכן עדיין...'}</div>${visualHtml}<div class="post-footer"><div class="post-tags">${tags}</div><div class="post-date">${dateStr}</div><div class="post-actions">${actions}</div></div></div>`;
+  return `<div class="post-card status-${post.status}" data-id="${post.id}" onclick="handleCardClick(event,${post.id})" oncontextmenu="event.preventDefault();toggleSelectPost(${post.id})"><div class="post-card-header"><div class="post-title">${post.title||'ללא כותרת'}</div>${badge}</div><div class="post-body">${post.body||'אין תוכן עדיין...'}</div>${visualHtml}<div class="post-footer"><div class="post-tags">${tags}</div><div class="post-date">${dateStr}</div><div class="post-actions">${actions}</div></div></div>`;
 }
 
 // ========== MODAL (mobile) ==========
@@ -1602,6 +1632,130 @@ function removeWindowTag(winId, i) {
 
 // ========== FAVORITES ==========
 let showFavOnly = false;
+let showRecentOnly = false;
+let selectedPosts = new Set();
+
+// ========== ITEM 8: Tag click in card handled inline ==========
+
+// ========== ITEM 9: TAG MANAGER ==========
+function openTagManager() {
+  renderTagManager();
+  document.getElementById('tag-manager-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeTagManager() {
+  document.getElementById('tag-manager-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function renderTagManager() {
+  const list = document.getElementById('tag-manager-list');
+  const tags = getSortedTagList();
+  if (!tags.length) { list.innerHTML = '<p style="color:var(--text3);text-align:center;padding:20px">אין תגיות עדיין</p>'; return; }
+  list.innerHTML = '';
+  tags.forEach(({tag, count}) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);';
+    row.innerHTML = `
+      <span style="flex:1;font-size:14px;font-weight:500;">#${tag}</span>
+      <span style="font-size:12px;color:var(--text3);">${count} פוסטים</span>
+      <button onclick="renameTagPrompt('${tag}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text3);font-size:12px;cursor:pointer;font-family:Heebo,sans-serif;">שנה שם</button>
+      <button onclick="deleteTagConfirm('${tag}')" style="background:none;border:1px solid var(--accent2);border-radius:6px;padding:4px 8px;color:var(--accent2);font-size:12px;cursor:pointer;font-family:Heebo,sans-serif;">מחק</button>`;
+    list.appendChild(row);
+  });
+}
+function createNewTag() {
+  const input = document.getElementById('tag-manager-new');
+  const val = input.value.trim();
+  if (!val) return;
+  showToast('✅ תגית "' + val + '" נוצרה — הוסף אותה לפוסט');
+  input.value = '';
+}
+function renameTagPrompt(oldTag) {
+  const newTag = prompt('שם חדש לתגית "' + oldTag + '":', oldTag);
+  if (!newTag || newTag === oldTag) return;
+  posts.forEach(p => {
+    if ((p.tags||[]).includes(oldTag)) {
+      p.tags = p.tags.map(t => t === oldTag ? newTag : t);
+      p.updated = Date.now();
+      savePosts(p, 'savePost');
+    }
+  });
+  saveLocalCache(); render(); renderTagManager();
+  showToast('✅ תגית שונתה ל-"' + newTag + '"');
+}
+function deleteTagConfirm(tag) {
+  if (!confirm('למחוק את התגית "' + tag + '" מכל הפוסטים?')) return;
+  posts.forEach(p => {
+    if ((p.tags||[]).includes(tag)) {
+      p.tags = p.tags.filter(t => t !== tag);
+      p.updated = Date.now();
+      savePosts(p, 'savePost');
+    }
+  });
+  saveLocalCache(); render(); renderTagManager();
+  showToast('🗑 תגית נמחקה');
+}
+
+// ========== ITEM 10: MULTI SELECT ==========
+function handleCardClick(event, postId) {
+  if (selectedPosts.size > 0) { toggleSelectPost(postId); return; }
+  editPost(postId);
+}
+function toggleSelectPost(postId) {
+  if (selectedPosts.has(postId)) selectedPosts.delete(postId);
+  else selectedPosts.add(postId);
+  updateSelectionUI();
+}
+function updateSelectionUI() {
+  const bar = document.getElementById('multi-select-bar');
+  const count = document.getElementById('multi-select-count');
+  document.querySelectorAll('.post-card').forEach(card => {
+    const id = Number(card.dataset.id);
+    card.classList.toggle('selected', selectedPosts.has(id));
+  });
+  if (selectedPosts.size > 0) {
+    bar.classList.add('open');
+    count.textContent = selectedPosts.size + ' נבחרו';
+  } else {
+    bar.classList.remove('open');
+  }
+}
+function clearSelection() { selectedPosts.clear(); updateSelectionUI(); }
+function bulkFavorite() {
+  selectedPosts.forEach(id => toggleFavorite(id));
+  clearSelection();
+}
+function bulkDelete() {
+  if (!confirm('למחוק ' + selectedPosts.size + ' פוסטים?')) return;
+  selectedPosts.forEach(id => {
+    const idx = posts.findIndex(p => p.id === id);
+    if (idx !== -1) { posts[idx].status = 'deleted'; posts[idx].deletedAt = Date.now(); posts[idx].updated = Date.now(); savePosts(posts[idx], 'savePost'); }
+  });
+  saveLocalCache(); clearSelection(); render();
+  showToast('🗑 ' + selectedPosts.size + ' פוסטים הועברו לסל');
+}
+function bulkAddTag() {
+  const tag = prompt('תגית להוסיף לכל הפוסטים שנבחרו:');
+  if (!tag) return;
+  selectedPosts.forEach(id => {
+    const idx = posts.findIndex(p => p.id === id);
+    if (idx !== -1 && !(posts[idx].tags||[]).includes(tag)) {
+      posts[idx].tags = [...(posts[idx].tags||[]), tag];
+      posts[idx].updated = Date.now();
+      savePosts(posts[idx], 'savePost');
+    }
+  });
+  saveLocalCache(); clearSelection(); render();
+  showToast('🏷️ תגית נוספה לפוסטים');
+}
+
+// ========== ITEM 11: RECENT FOLDER ==========
+function toggleRecentFilter(btn) {
+  showRecentOnly = !showRecentOnly;
+  if (showRecentOnly) { showFavOnly = false; document.getElementById('fav-filter-btn').classList.remove('active'); }
+  btn.classList.toggle('active', showRecentOnly);
+  render();
+}
 
 function toggleFavorite(postId) {
   const idx = posts.findIndex(p => p.id === postId);
