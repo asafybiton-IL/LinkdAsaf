@@ -1,11 +1,9 @@
-const CACHE_NAME = 'linkdasaf-v1';
+const CACHE_NAME = 'linkdasaf-v' + Date.now();
 const ASSETS = [
   '/LinkdAsaf/',
-  '/LinkdAsaf/index.html',
-  'https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap'
+  '/LinkdAsaf/index.html'
 ];
 
-// Install — cache all assets
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
@@ -13,7 +11,6 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Activate — delete old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -23,23 +20,20 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch — cache first, fallback to network
 self.addEventListener('fetch', event => {
-  // Don't intercept Google Sheets API calls
   if (event.request.url.includes('script.google.com')) return;
+  if (event.request.url.includes('fonts.googleapis.com')) return;
 
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        // Cache new responses
-        if (response && response.status === 200 && response.type === 'basic') {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return response;
-      }).catch(() => {
-        // Offline fallback for navigation
+    fetch(event.request).then(response => {
+      if (response && response.status === 200) {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+      }
+      return response;
+    }).catch(() => {
+      return caches.match(event.request).then(cached => {
+        if (cached) return cached;
         if (event.request.mode === 'navigate') {
           return caches.match('/LinkdAsaf/index.html');
         }
