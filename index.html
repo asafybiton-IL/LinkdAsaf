@@ -816,12 +816,12 @@ function updateSidebarTags() {
 function searchMatch(post, query) {
   if (!query) return true;
   const q = query.toLowerCase().trim();
-  const fields = [post.title||'', post.body||'', post.visual||'', ...(post.tags||[])];
+  const fields = [post.title||'', post.body||'', post.visual||'', ...(post.tags||[])].map(f => String(f||''));
   if (fields.some(f => f.toLowerCase().includes(q))) return true;
   if (q.length > 3) {
     return fields.some(f => {
       const words = f.toLowerCase().split(' ');
-      return words.some(w => levDist(w, q) <= 1);
+      return words.some(w => w && levDist(w, q) <= 1);
     });
   }
   return false;
