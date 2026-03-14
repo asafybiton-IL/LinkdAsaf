@@ -233,6 +233,13 @@
     .topbar { padding:10px 12px; gap:8px; border-bottom:1px solid var(--border); }
     .topbar h2 { display:none; }
     .search-box { flex:1; padding:7px 12px; }
+    .compact-toggle { display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; border:1px solid var(--border); background:none; color:var(--text3); font-size:16px; cursor:pointer; flex-shrink:0; }
+    .compact-toggle.active { border-color:var(--accent); color:var(--accent); }
+    .posts-grid.compact { grid-template-columns:1fr 1fr; gap:8px; }
+    .posts-grid.compact .post-card { padding:12px; }
+    .posts-grid.compact .post-body { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px; }
+    .posts-grid.compact .post-actions { flex-wrap:wrap; gap:4px; }
+    .posts-grid.compact .action-btn { width:28px; height:28px; font-size:12px; }
     .search-box input { font-size:14px; }
 
     /* Stats */
@@ -304,6 +311,7 @@
     <button class="new-post-btn" onclick="isDesktop() ? openWindow(null, currentFilter !== 'all' && currentFilter !== 'deleted' ? currentFilter : null, filterTag) : openModal(null, currentFilter !== 'all' && currentFilter !== 'deleted' ? currentFilter : null, filterTag)">＋ פוסט חדש</button>
     <div class="sidebar-section">סטטוס</div>
     <div class="sidebar-filters">
+      <button class="sidebar-btn" id="fav-filter-btn" onclick="toggleFavFilter(this)">⭐ מועדפים <span class="count-badge" id="count-fav">0</span></button>
       <button class="sidebar-btn active" onclick="filterStatus('all',this)"><span>📁</span> הכל <span class="count-badge" id="count-all">0</span></button>
       <button class="sidebar-btn" onclick="filterStatus('idea',this)" ondragover="sidebarDragOver(event,'idea')" ondragleave="sidebarDragLeave(event)" ondrop="sidebarDrop(event,'idea')"><span class="dot" style="background:var(--idea)"></span> רעיון <span class="count-badge" id="count-idea">0</span></button>
       <button class="sidebar-btn" onclick="filterStatus('draft',this)" ondragover="sidebarDragOver(event,'draft')" ondragleave="sidebarDragLeave(event)" ondrop="sidebarDrop(event,'draft')"><span class="dot" style="background:var(--draft)"></span> דראפט <span class="count-badge" id="count-draft">0</span></button>
@@ -483,7 +491,14 @@ function checkLogin() {
     document.getElementById('login-overlay').style.display = 'none';
     err.textContent = '';
     logDeviceLogin();
-    init().then(checkImport).then(() => setTimeout(restoreDraftIfExists, 500));
+    init().then(checkImport).then(() => {
+    setTimeout(restoreDraftIfExists, 500);
+    // Init sort selects
+    const sort = localStorage.getItem('ayb_tag_sort') || 'alpha';
+    ['sidebar-tag-sort','mobile-tag-sort','tag-sort-select'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = sort;
+    });
+  });
   } else {
     input.classList.add('error');
     err.textContent = 'סיסמה שגויה, נסה שוב';
@@ -769,24 +784,66 @@ function updateSidebarTags() {
   const sel = document.getElementById('sidebar-tag-sort');
   if (sel) sel.value = sort;
   container.innerHTML = '';
-  sortedTags.forEach(({ tag }) => {
+  const pinnedTags = JSON.parse(localStorage.getItem('ayb_pinned_tags')||'[]');
+  // Sort: pinned first, then sorted
+  const pinned = sortedTags.filter(({tag}) => pinnedTags.includes(tag));
+  const unpinned = sortedTags.filter(({tag}) => !pinnedTags.includes(tag));
+  const finalTags = [...pinned, ...unpinned];
+  finalTags.forEach(({ tag }) => {
+    const isPinned = pinnedTags.includes(tag);
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;align-items:center;gap:2px;';
     const chip = document.createElement('button');
     chip.className = 'tag-chip' + (filterTag === tag ? ' active' : '');
-    chip.textContent = tag;
+    chip.textContent = (isPinned ? '📌 ' : '') + tag;
     chip.onclick = () => filterByTag(filterTag === tag ? null : tag);
     chip.addEventListener('dragover', (e) => { e.preventDefault(); chip.classList.add('drop-target'); });
     chip.addEventListener('dragleave', () => chip.classList.remove('drop-target'));
     chip.addEventListener('drop', (e) => { e.preventDefault(); chip.classList.remove('drop-target'); dropToTag(tag); });
-    container.appendChild(chip);
+    const pinBtn = document.createElement('button');
+    pinBtn.style.cssText = 'background:none;border:none;cursor:pointer;opacity:0.4;font-size:11px;padding:2px;color:var(--text3);';
+    pinBtn.textContent = isPinned ? '×' : '📌';
+    pinBtn.title = isPinned ? 'הסר נעיצה' : 'נעץ תגית';
+    pinBtn.onclick = (e) => { e.stopPropagation(); togglePinTag(tag); };
+    wrap.appendChild(chip);
+    wrap.appendChild(pinBtn);
+    container.appendChild(wrap);
   });
+}
+
+function searchMatch(post, query) {
+  if (!query) return true;
+  const q = query.toLowerCase().trim();
+  const fields = [post.title||'', post.body||'', post.visual||'', ...(post.tags||[])];
+  // Exact match
+  if (fields.some(f => f.toLowerCase().includes(q))) return true;
+  // Fuzzy: allow 1 typo for queries > 3 chars
+  if (q.length > 3) {
+    return fields.some(f => {
+      const words = f.toLowerCase().split(/\s+/);
+      return words.some(w => levenshtein(w, q) <= 1 || w.includes(q) || q.includes(w));
+    });
+  }
+  return false;
+}
+
+function levenshtein(a, b) {
+  if (Math.abs(a.length - b.length) > 2) return 99;
+  const dp = Array.from({length: a.length+1}, (_,i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++)
+      dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[a.length][b.length];
 }
 
 function renderPosts() {
   let filtered = posts.filter(p => {
     const matchStatus = currentFilter === 'all' ? p.status !== 'deleted' : p.status === currentFilter;
     const matchTag = !filterTag || (p.tags||[]).includes(filterTag);
-    const matchSearch = !currentSearch || (p.title||'').includes(currentSearch) || (p.body||'').includes(currentSearch) || (p.tags||[]).some(t => t.includes(currentSearch));
-    return matchStatus && matchTag && matchSearch;
+    const matchSearch = !currentSearch || searchMatch(p, currentSearch);
+    const matchFav = !showFavOnly || (p.tags||[]).includes('⭐');
+    return matchStatus && matchTag && matchSearch && matchFav;
   });
   const sortVal = window.currentSort || 'created_desc';
   const statusOrder = { idea:0, draft:1, ready:2, published:3, deleted:4 };
@@ -808,6 +865,7 @@ function renderPosts() {
     return;
   }
   container.innerHTML = '';
+  applyCompactView();
   filtered.forEach(post => {
     const div = document.createElement('div');
     div.innerHTML = renderCard(post);
@@ -868,7 +926,8 @@ function renderCard(post) {
   const tags = (post.tags||[]).map(t => `<span class="post-tag">${t}</span>`).join('');
   const dateStr = post.date ? `📅 ${post.date}` : '';
   const visualHtml = post.visual ? `<div class="post-visual">🎨 ${post.visual}</div>` : '';
-  let actions = `<button class="action-btn" onclick="event.stopPropagation();copyText(${post.id})">📋</button><button class="action-btn" onclick="event.stopPropagation();duplicatePost(${post.id},null)" title="שכפל">⧉</button>`;
+  const isFav = (post.tags||[]).includes('⭐');
+  let actions = `<button class="action-btn${isFav?' fav-active':''}" onclick="event.stopPropagation();toggleFavorite(${post.id})" title="מועדף">⭐</button><button class="action-btn" onclick="event.stopPropagation();copyText(${post.id})">📋</button><button class="action-btn" onclick="event.stopPropagation();duplicatePost(${post.id},null)" title="שכפל">⧉</button>`;
   if (post.status === 'deleted') {
     const hoursLeft = post.deletedAt ? Math.max(0, Math.ceil((48*3600*1000 - (Date.now() - post.deletedAt)) / 3600000)) : 48;
     actions = `<span class="trash-timer">${hoursLeft}ש׳</span><button class="restore-btn" onclick="event.stopPropagation();restorePost(${post.id})">♻️ שחזר</button>`;
@@ -883,6 +942,20 @@ function renderCard(post) {
 
 // ========== MODAL (mobile) ==========
 function isDesktop() { return window.innerWidth > 768; }
+function isMobileDevice() { return window.innerWidth <= 768; }
+
+let isCompactView = localStorage.getItem('ayb_compact') === '1';
+function toggleCompactView() {
+  isCompactView = !isCompactView;
+  localStorage.setItem('ayb_compact', isCompactView ? '1' : '0');
+  applyCompactView();
+}
+function applyCompactView() {
+  const btn = document.getElementById('compact-toggle-btn');
+  const grid = document.getElementById('posts-container');
+  if (btn) btn.classList.toggle('active', isCompactView);
+  if (grid && isMobileDevice()) grid.classList.toggle('compact', isCompactView);
+}
 
 function openModal(post = null, contextStatus = null, contextTag = null) {
   if (isDesktop()) { openWindow(post, contextStatus, contextTag); return; }
@@ -1065,6 +1138,14 @@ function filterStatus(status, btn) {
 }
 
 function filterByTag(tag) { filterTag = tag; updateSidebarTags(); renderPosts(); }
+
+function togglePinTag(tag) {
+  let pinned = JSON.parse(localStorage.getItem('ayb_pinned_tags')||'[]');
+  if (pinned.includes(tag)) pinned = pinned.filter(t => t !== tag);
+  else pinned.push(tag);
+  localStorage.setItem('ayb_pinned_tags', JSON.stringify(pinned));
+  updateSidebarTags();
+}
 function searchPosts(val) { currentSearch = val; renderPosts(); }
 function setView(view, btn) { currentView = view; document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderPosts(); }
 function setSort(val) { window.currentSort = val; renderPosts(); }
@@ -1509,6 +1590,28 @@ function removeWindowTag(winId, i) {
   markWindowChanged(winId);
 }
 
+// ========== FAVORITES ==========
+let showFavOnly = false;
+
+function toggleFavorite(postId) {
+  const idx = posts.findIndex(p => p.id === postId);
+  if (idx === -1) return;
+  const tags = posts[idx].tags || [];
+  if (tags.includes('⭐')) posts[idx].tags = tags.filter(t => t !== '⭐');
+  else posts[idx].tags = ['⭐', ...tags];
+  posts[idx].updated = Date.now();
+  saveLocalCache();
+  savePosts(posts[idx], 'savePost');
+  render();
+  showToast(posts[idx].tags.includes('⭐') ? '⭐ נוסף למועדפים' : 'הוסר ממועדפים');
+}
+
+function toggleFavFilter(btn) {
+  showFavOnly = !showFavOnly;
+  btn.classList.toggle('active', showFavOnly);
+  render();
+}
+
 // ========== DUPLICATE ==========
 function duplicatePost(postId, fromWinId) {
   const src = postId ? posts.find(p => p.id === postId) : null;
@@ -1544,7 +1647,14 @@ if ('serviceWorker' in navigator) {
 if (!checkAuth()) {
   // wait for login
 } else {
-  init().then(checkImport).then(() => setTimeout(restoreDraftIfExists, 500));
+  init().then(checkImport).then(() => {
+    setTimeout(restoreDraftIfExists, 500);
+    // Init sort selects
+    const sort = localStorage.getItem('ayb_tag_sort') || 'alpha';
+    ['sidebar-tag-sort','mobile-tag-sort','tag-sort-select'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = sort;
+    });
+  });
 }
 </script>
 </body>
