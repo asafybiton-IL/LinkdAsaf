@@ -163,6 +163,16 @@
   .device-row .device-time { color:var(--text3); font-size:11px; }
 
   /* MULTI-WINDOW (desktop) */
+  /* Tag picker button */
+  .tag-picker-btn { background:none; border:1px solid var(--border); border-radius:6px; color:var(--text3); font-size:11px; padding:3px 8px; cursor:pointer; font-family:Heebo,sans-serif; transition:all 0.15s; }
+  .tag-picker-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+  /* Tag picker sheet */
+  .tag-picker-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:298; display:none; }
+  .tag-picker-overlay.open { display:block; }
+  .tag-picker-sheet { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); border-radius:20px 20px 0 0; padding:16px 16px 32px; z-index:299; transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.4,0,0.2,1); max-height:65vh; overflow-y:auto; }
+  .tag-picker-sheet.open { transform:translateY(0); }
+
   /* Tag suggestions - global */
   .tag-suggestions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
   .tag-suggest-chip { padding:5px 12px; border-radius:20px; background:var(--surface3); border:1px solid var(--border); color:var(--text3); font-size:12px; font-weight:500; cursor:pointer; font-family:'Heebo',sans-serif; transition:all 0.15s; }
@@ -352,9 +362,12 @@
         <div class="form-row" style="margin-bottom:0"><label class="form-label">תאריך</label><input type="date" class="form-input" id="field-date" /></div>
       </div>
       <div class="form-row" style="margin-top:16px">
-        <label class="form-label">תגיות</label>
+        <label class="form-label" style="display:flex;align-items:center;justify-content:space-between;">
+          תגיות
+          <button class="tag-picker-btn" onclick="openTagPicker('modal')" type="button">＋ בחר תגית</button>
+        </label>
         <div class="tags-input-area" id="tags-input-area" onclick="document.getElementById('tag-input').focus()">
-          <input type="text" class="tags-input" id="tag-input" placeholder="הוסף תגית ולחץ Enter..." onkeydown="handleTagInput(event)" oninput="onTagInput(this.value,'modal')" onfocus="onTagInput('','modal')" />
+          <input type="text" class="tags-input" id="tag-input" placeholder="הקלד תגית חדשה + Enter..." onkeydown="handleTagInput(event)" oninput="onTagInput(this.value,'modal')" />
         </div>
         <div id="modal-tag-suggestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
       </div>
@@ -384,6 +397,30 @@
 
 <!-- Mobile tags drawer -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeTagsDrawer()"></div>
+
+<!-- TAG PICKER SHEET -->
+<div class="tag-picker-overlay" id="tag-picker-overlay" onclick="closeTagPicker()"></div>
+<div class="tag-picker-sheet" id="tag-picker-sheet">
+  <div class="drawer-handle"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <span class="drawer-title">בחר תגיות</span>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <select id="tag-sort-select" onchange="renderTagPicker()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text2);padding:5px 10px;font-size:12px;font-family:Heebo,sans-serif;outline:none;">
+        <option value="alpha">א׳-ב׳</option>
+        <option value="count">לפי שימוש</option>
+        <option value="recent">שימוש אחרון</option>
+      </select>
+      <button onclick="closeTagPicker()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0 4px;">×</button>
+    </div>
+  </div>
+  <div style="margin-bottom:12px;">
+    <input type="text" id="tag-picker-search" placeholder="חפש תגית..." oninput="renderTagPicker()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:14px;font-family:Heebo,sans-serif;outline:none;direction:rtl;" />
+  </div>
+  <div class="drawer-tags-grid" id="tag-picker-grid"></div>
+  <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+    <input type="text" id="tag-picker-new" placeholder="צור תגית חדשה + Enter..." onkeydown="handleNewTagInPicker(event)" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:14px;font-family:Heebo,sans-serif;outline:none;direction:rtl;" />
+  </div>
+</div>
 <div class="mobile-tags-drawer" id="tags-drawer">
   <div class="drawer-handle"></div>
   <div class="drawer-title">🏷️ סינון לפי תגית</div>
@@ -1052,7 +1089,10 @@ function openWindow(post = null, contextStatus = null, contextTag = null) {
         <div class="form-row" style="margin-bottom:0"><label class="form-label">תאריך</label><input type="date" class="form-input" id="wf_date_${winId}" value="${post?(post.date||''):''}" onchange="markWindowChanged('${winId}')" /></div>
       </div>
       <div class="form-row" style="margin-top:12px">
-        <label class="form-label">תגיות</label>
+        <label class="form-label" style="display:flex;align-items:center;justify-content:space-between;">
+          תגיות
+          <button class="tag-picker-btn" onclick="openTagPicker('${winId}')" type="button">＋ בחר תגית</button>
+        </label>
         <div class="tags-input-area window-tags-area" id="wf_tags_area_${winId}" onclick="document.getElementById('wf_tag_input_${winId}').focus()">
           <input type="text" class="tags-input" id="wf_tag_input_${winId}" placeholder="הוסף תגית + Enter..." onkeydown="handleWindowTagInput(event,'${winId}')" oninput="onTagInput(this.value,'${winId}')" onfocus="setTimeout(()=>onTagInput('','${winId}'),50)" />
         </div>
@@ -1225,6 +1265,116 @@ function dropToTag(tag) {
   } else {
     showToast('🏷️ התגית כבר קיימת');
   }
+}
+
+// ========== TAG PICKER SHEET ==========
+let tagPickerContext = null;
+let tagSortPref = localStorage.getItem('ayb_tag_sort') || 'alpha';
+
+function openTagPicker(context) {
+  tagPickerContext = context;
+  const sel = document.getElementById('tag-sort-select');
+  if (sel) sel.value = tagSortPref;
+  document.getElementById('tag-picker-search').value = '';
+  document.getElementById('tag-picker-new').value = '';
+  renderTagPicker();
+  document.getElementById('tag-picker-overlay').classList.add('open');
+  document.getElementById('tag-picker-sheet').classList.add('open');
+}
+
+function closeTagPicker() {
+  document.getElementById('tag-picker-overlay').classList.remove('open');
+  document.getElementById('tag-picker-sheet').classList.remove('open');
+  tagPickerContext = null;
+}
+
+function getTagStats() {
+  const count = {}, lastUsed = {};
+  posts.filter(p => p.status !== 'deleted').forEach(p => {
+    (p.tags||[]).forEach(t => {
+      count[t] = (count[t]||0) + 1;
+      lastUsed[t] = Math.max(lastUsed[t]||0, p.updated||p.created||0);
+    });
+  });
+  return { count, lastUsed };
+}
+
+function renderTagPicker() {
+  const grid = document.getElementById('tag-picker-grid');
+  if (!grid) return;
+  const query = (document.getElementById('tag-picker-search')?.value||'').trim();
+  const sort = document.getElementById('tag-sort-select')?.value || 'alpha';
+  tagSortPref = sort;
+  localStorage.setItem('ayb_tag_sort', sort);
+
+  const { count, lastUsed } = getTagStats();
+  let tags = getAllExistingTags();
+  if (query) tags = tags.filter(t => t.includes(query));
+
+  if (sort === 'count') tags.sort((a,b) => (count[b]||0) - (count[a]||0));
+  else if (sort === 'recent') tags.sort((a,b) => (lastUsed[b]||0) - (lastUsed[a]||0));
+  // alpha is default from getAllExistingTags
+
+  const activeTags = tagPickerContext === 'modal'
+    ? (currentTags||[])
+    : (windows[tagPickerContext]?.tagsList||[]);
+
+  grid.innerHTML = '';
+  if (tags.length === 0) {
+    grid.innerHTML = '<span style="color:var(--text3);font-size:13px;">אין תגיות תואמות</span>';
+    return;
+  }
+
+  tags.forEach(tag => {
+    const isActive = activeTags.includes(tag);
+    const btn = document.createElement('button');
+    btn.className = 'drawer-tag-btn' + (isActive ? ' active' : '');
+    btn.innerHTML = '#' + tag + (count[tag] ? ` <span style="opacity:0.6;font-size:11px;">${count[tag]}</span>` : '');
+    btn.onclick = () => {
+      if (isActive) {
+        removeTagInContext(tag, tagPickerContext);
+      } else {
+        addTagInContext(tag, tagPickerContext);
+      }
+      renderTagPicker();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function addTagInContext(tag, context) {
+  if (context === 'modal') {
+    if (!currentTags.includes(tag)) { currentTags.push(tag); renderTagChips(); }
+  } else {
+    if (!windows[context]) return;
+    if (!windows[context].tagsList) windows[context].tagsList = [];
+    if (!windows[context].tagsList.includes(tag)) {
+      windows[context].tagsList.push(tag);
+      renderWindowTags(context);
+      markWindowChanged(context);
+    }
+  }
+}
+
+function removeTagInContext(tag, context) {
+  if (context === 'modal') {
+    currentTags = currentTags.filter(t => t !== tag);
+    renderTagChips();
+  } else {
+    if (!windows[context]?.tagsList) return;
+    windows[context].tagsList = windows[context].tagsList.filter(t => t !== tag);
+    renderWindowTags(context);
+    markWindowChanged(context);
+  }
+}
+
+function handleNewTagInPicker(e) {
+  if (e.key !== 'Enter') return;
+  const val = e.target.value.trim();
+  if (!val || !tagPickerContext) return;
+  addTagInContext(val, tagPickerContext);
+  e.target.value = '';
+  renderTagPicker();
 }
 
 // ========== TAG SUGGESTIONS ==========
