@@ -956,7 +956,7 @@ function onCardDragEnd() {
 
 function renderCard(post) {
   const badge = `<span class="status-badge badge-${post.status}">${statusEmoji[post.status]||''} ${statusLabels[post.status]||''}</span>`;
-  const tags = (post.tags||[]).filter(t=>t!=='⭐').map(t => `<span class="post-tag" onclick="event.stopPropagation();openTagManagerFor('${t}')" style="cursor:pointer;" title="נהל תגית">${t}</span>`).join('');
+  const tags = (post.tags||[]).filter(t=>t!=='⭐').map(t => `<span class="post-tag" onclick="event.stopPropagation();event.preventDefault();openTagManagerFor('${t}')" onmousedown="event.stopPropagation()" style="cursor:pointer;" title="נהל תגית">${t}</span>`).join('');
   const dateStr = post.date ? `📅 ${post.date}` : '';
   const visualHtml = post.visual ? `<div class="post-visual">🎨 ${post.visual}</div>` : '';
   const isFav = (post.tags||[]).includes('⭐');
