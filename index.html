@@ -110,7 +110,7 @@
   .form-label { display:block; font-size:12px; font-weight:700; color:var(--text3); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; }
   .form-input, .form-textarea, .form-select { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 16px; color:var(--text); font-size:14px; font-family:'Heebo',sans-serif; outline:none; transition:border-color 0.15s; direction:rtl; }
   .form-input:focus, .form-textarea:focus, .form-select:focus { border-color:var(--accent); }
-  .form-textarea { min-height:140px; resize:vertical; line-height:1.7; }
+  .form-textarea { min-height:140px; resize:none; line-height:1.7; overflow:hidden; }
   .form-select option { background:var(--surface2); }
   .form-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
   .tags-input-area { display:flex; flex-wrap:wrap; gap:6px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; min-height:48px; align-items:center; cursor:text; }
@@ -261,17 +261,35 @@
 
     /* Modal as bottom sheet */
     .modal-overlay { align-items:flex-end; padding:0; }
-    .modal { border-radius:20px 20px 0 0; height:92vh; padding:20px 16px 0; display:flex; flex-direction:column; overflow:hidden; transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .modal { border-radius:20px 20px 0 0; height:96vh; padding:0; display:flex; flex-direction:column; overflow:hidden; transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.4,0,0.2,1); }
     .modal-overlay.open .modal { transform:translateY(0); }
-    .modal-header { flex-shrink:0; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--border); }
-    .modal-body-scroll { flex:1; overflow-y:auto; padding:0 0 16px; -webkit-overflow-scrolling:touch; }
-    #field-body { min-height:180px; font-size:16px !important; line-height:1.8; }
+    .modal-header { flex-shrink:0; padding:16px 16px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .modal-header h3 { font-size:16px; font-weight:800; }
+    .modal-body-scroll { flex:1; overflow-y:auto; padding:16px 16px 0; -webkit-overflow-scrolling:touch; }
+    /* Writing area - Notes-like experience */
+    #field-body { 
+      min-height:240px; 
+      font-size:17px !important; 
+      line-height:1.9 !important; 
+      border:none !important; 
+      background:transparent !important; 
+      padding:8px 0 !important; 
+      border-radius:0 !important;
+      resize:none;
+      overflow:hidden;
+    }
+    #field-body:focus { border-color:transparent !important; box-shadow:none; }
+    .body-writing-area { border-bottom:1px solid var(--border); margin-bottom:16px; padding-bottom:8px; }
     .form-input, .form-select, .form-textarea { font-size:16px !important; }
     .form-input, .form-select { padding:13px 14px; }
-    .modal-footer { position:sticky; bottom:0; background:var(--surface); padding:12px 0 28px; border-top:1px solid var(--border); flex-shrink:0; gap:8px; z-index:10; display:flex; }
+    #field-title { font-size:18px !important; font-weight:700 !important; border:none !important; background:transparent !important; padding:8px 0 !important; border-radius:0 !important; border-bottom:1px solid var(--border) !important; }
+    #field-title:focus { border-color:var(--accent) !important; }
+    .modal-footer { position:sticky; bottom:0; background:var(--surface); padding:10px 16px 28px; border-top:1px solid var(--border); flex-shrink:0; gap:8px; z-index:10; display:flex; }
     .modal-footer button { flex:1; padding:13px; font-size:14px; }
     .autosave-indicator { display:none; }
     .tag-suggestions { padding-bottom:8px; }
+    .char-counter { font-size:11px; color:var(--text3); text-align:left; margin-top:4px; }
+    .form-label { font-size:11px; font-weight:700; color:var(--text3); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:4px; }
 
 
 
@@ -376,7 +394,7 @@
     </div>
     <div class="modal-body-scroll">
       <div class="form-row"><label class="form-label">נושא / כותרת</label><input type="text" class="form-input" id="field-title" placeholder="מה הנושא המרכזי?" /></div>
-      <div class="form-row"><label class="form-label">גוף הפוסט</label><textarea class="form-textarea" id="field-body" placeholder="כתוב את הפוסט כאן..." oninput="updateCharCount(this)" style="min-height:180px"></textarea><div class="char-counter" id="char-counter">0 / 3000 תווים</div></div>
+      <div class="form-row body-writing-area"><label class="form-label">גוף הפוסט</label><textarea class="form-textarea" id="field-body" placeholder="כתוב את הפוסט כאן..." oninput="updateCharCount(this);autoExpand(this)"></textarea><div class="char-counter" id="char-counter">0 / 3000 תווים</div></div>
       <div class="form-row"><label class="form-label">הצעה לויז׳ואל</label><input type="text" class="form-input" id="field-visual" placeholder="תאר את הויז'ואל..." /></div>
       <div class="form-row-2">
         <div class="form-row" style="margin-bottom:0"><label class="form-label">סטטוס</label><select class="form-select" id="field-status"><option value="idea">💡 רעיון</option><option value="draft">✏️ דראפט</option><option value="ready">✅ מוכן לפרסום</option><option value="published">🚀 פורסם</option></select></div>
@@ -1011,8 +1029,15 @@ function openModal(post = null, contextStatus = null, contextTag = null) {
     const scroll = document.querySelector('.modal-body-scroll');
     if (scroll) scroll.scrollTop = 0;
     onTagInput('', 'modal');
+    const bodyEl = document.getElementById('field-body');
+    if (bodyEl) autoExpand(bodyEl);
   }, 150);
   startAutosave();
+}
+
+function autoExpand(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
 }
 
 function closeModal() {
@@ -1071,12 +1096,21 @@ function startAutosave() {
   if (autosaveTimer) clearInterval(autosaveTimer);
   autosaveChanged = false;
 
+  // Handle iOS keyboard - scroll into view
+  const bodyEl = document.getElementById('field-body');
+  if (bodyEl) {
+    bodyEl.addEventListener('focus', () => {
+      setTimeout(() => bodyEl.scrollIntoView({behavior:'smooth', block:'center'}), 300);
+    });
+  }
+
   // Save draft to cache on every keystroke (survives app close)
   ['field-title','field-body','field-visual'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', () => {
       autosaveChanged = true;
       saveDraftToCache();
+      if (el.tagName === 'TEXTAREA') autoExpand(el);
     });
   });
 
